@@ -23,15 +23,15 @@
 
 define_integrated_process <- function (type, structure, classes, density_dependence, replicates = 1) {
   
-  if (!(process %in% c('IPM', 'MPM'))) {
-    stop('process must be one of IPM or MPM')
+  if (!(type %in% c('IPM', 'MPM'))) {
+    stop('type must be one of IPM or MPM')
   }
   
-  if (process == 'IPM') {
+  if (type == 'IPM') {
     stop('IPM models not currently implemented')
   }
   
-  if (process == 'MPM') {
+  if (type == 'MPM') {
     
     # set density dependence prior
     density_parameter <- uniform(min = 0.8, max = 1.2, dim = 1)
