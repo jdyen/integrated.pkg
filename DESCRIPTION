@@ -1,0 +1,25 @@
+Package: integrated
+Type: Package
+Title: Integrated Bayesian Models of Population Dynamics
+Version: 0.0.1
+Date: 2018-06-18
+Authors@R: as.person(c(
+    "Jian Yen <jdl.yen@gmail.com> [aut, cre]" 
+  ))
+Description: Use greta to generate parameter estimates for integrated models of population dynamics.
+License: file LICENSE 
+URL: https://github.com/jdyen/integrated
+BugReports: https://github.com/jdyen/integrated/issues
+Encoding: UTF-8
+LazyData: true
+Depends:
+    R (>= 3.0)
+Imports:
+    greta
+Suggests:
+    knitr,
+    testthat,
+    covr,
+    rmarkdown
+VignetteBuilder: knitr
+RoxygenNote: 6.0.1
