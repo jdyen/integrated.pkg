@@ -186,7 +186,7 @@ add_abundance_module <- function (data, process_model, observation_model) {
   mu_iterated <- vector("list", length = process_model$replicates)
   
   for (i in seq_len(process_model$replicates)) {
-    mu_iterated[[i]] <- iterate_state(t(process_model$transitions[[i]]),
+    mu_iterated[[i]] <- iterate_state(t(process_model$parameters$transitions[[i]]),
                                       process_model$mu_initial[[i]],
                                       process_model$density_parameter,
                                       seq_len(ncol(data[[i]])),
