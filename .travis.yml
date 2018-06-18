@@ -1,0 +1,46 @@
+sudo: required
+language: r
+warnings_are_errors: false
+dist: trusty
+
+r_packages:
+  - reticulate
+  - tensorflow
+  - R6
+  - coda
+  - rmarkdown
+  - testthat
+  - covr
+  - knitr
+
+r_github_packages:
+  - greta-dev/greta@dev
+
+cache:
+  packages: true
+  directories:
+    - $HOME/.cache/pip
+
+addons:
+  apt:
+    sources:
+      ubuntu-toolchain-r-test
+    packages:
+      - libmagick++-dev
+      - wget
+      - libatlas3gf-base
+      - libatlas-dev
+      - python-joblib
+      - python-dev
+      - libv8-dev
+
+before_install:
+  - pip install --user numpy
+  - pip install --user tensorflow
+
+after_success:
+  - Rscript -e 'covr::codecov(type = "all")'
+
+email:
+  on_success: change
+  on_failure: change
