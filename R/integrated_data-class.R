@@ -45,34 +45,40 @@ add_integrated_data <- function (data,
   } 
   
   if (process_link == 'growth') {
-    data_module <- build_growth_module(data = data,
-                                       process_model = process_model,
-                                       observation_model = observation_model)
-  }
+    add_growth_module(data = data,
+                      process_model = process_model,
+                      observation_model = observation_model)
+  } 
   
   if (process_link == 'abundance') {
-    data_module <- build_abundance_module(data = data,
-                                          process_model = process_model,
-                                          observation_model = observation_model)
-  }
+    add_abundance_module(data = data,
+                         process_model = process_model,
+                         observation_model = observation_model)
+  } 
+  
+  if (process_link == 'mark_recapture') {
+    add_mark_recapture_module(data = data,
+                              process_model = process_model,
+                              observation_model = observation_model)
+  } 
   
   if (process_link == 'size_abundance') {
-    data_module <- build_size_abundance_module(data = data,
-                                               process_model = process_model,
-                                               observation_model = observation_model)
-  } 
+    add_size_abundance_module(data = data,
+                              process_model = process_model,
+                              observation_model = observation_model)
+  }  
   
   if (process_link == 'biomass') {
-    data_module <- build_biomass_module(data = data,
-                                        process_model = process_model,
-                                        observation_model = observation_model)
-  } 
+    add_biomass_module(data = data,
+                       process_model = process_model,
+                       observation_model = observation_model)
+  }  
   
   if (process_link == 'community') {
-    data_module <- build_community_module(data = data,
-                                          process_model = process_model,
-                                          observation_model = observation_model)
-  } 
+    add_community_module(data = data,
+                         process_model = process_model,
+                         observation_model = observation_model)
+  }  
   
   data_module <- list(data = data,
                       process_model = process_model,
@@ -163,9 +169,6 @@ build_growth_module <- function (data, process_model, observation_model) {
   for (i in seq_len(process_model$replicates)) {
     for (j in seq_len(ncol(data))) {
       data_tmp <- matrix(data[, k], ncol = process_model$classes)
-      
-      ## CAN WE REUTRN TEH GRETA ARRAY RATHER THAN ADDING DISTRIBUTION TO DATA?
-      
       distribution(data_tmp) <- multinomial(size = sum(data_tmp),
                                             prob = process_model$parameters$transitions[[i]][, j],
                                             dim = 1)
@@ -187,6 +190,16 @@ build_abundance_module <- function (data, process_model, observation_model) {
                                       seq_len(ncol(data[[i]])),
                                       dens_form = process_model$density_dependence)
   }
+  
+  mu_flattened <- do.call("c", mu_iterated)
+  distribution(data) <- poisson(mu_flattened)
+  
+}
+
+# internal function: build mark-recapture data module
+build_mark_recapture_module <- function (data, process_model, observation_model) {
+  
+  NULL
   
 }
 
