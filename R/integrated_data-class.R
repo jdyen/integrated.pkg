@@ -166,7 +166,7 @@ as.integrated_data <- function (model) {
 }
 
 # internal function: build growth data module
-build_growth_module <- function (data, process_model, observation_model) {
+add_growth_module <- function (data, process_model, observation_model) {
   
   for (i in seq_len(process_model$replicates)) {
     for (j in seq_len(ncol(data))) {
@@ -180,7 +180,7 @@ build_growth_module <- function (data, process_model, observation_model) {
 }
 
 # internal function: build abundance data module
-build_abundance_module <- function (data, process_model, observation_model) {
+add_abundance_module <- function (data, process_model, observation_model) {
   
   # create output lists
   mu_iterated <- vector("list", length = process_model$replicates)
@@ -199,14 +199,14 @@ build_abundance_module <- function (data, process_model, observation_model) {
 }
 
 # internal function: build mark-recapture data module
-build_mark_recapture_module <- function (data, process_model, observation_model) {
+add_mark_recapture_module <- function (data, process_model, observation_model) {
   
   NULL
   
 }
 
 # internal function: build size-abundance data module
-build_size_abundance_module <- function (data, process_model, observation_model) {
+add_size_abundance_module <- function (data, process_model, observation_model) {
   
   data_module <- NULL
   
@@ -224,7 +224,7 @@ build_biomass_module <- function (data, process_model, observation_model) {
 }
 
 # internal function: build community data module
-build_community_module <- function (data, process_model, observation_model) {
+add_community_module <- function (data, process_model, observation_model) {
   
   data_module <- NULL
   
