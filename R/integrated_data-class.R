@@ -195,7 +195,7 @@ add_abundance_module <- function (data, process_model, observation_model) {
   
   mu_flattened <- do.call('c', mu_iterated)
   data_flattened <- do.call('c', data)
-  distribution(data) <- poisson(mu_flattened)
+  distribution(data_flattened) <- poisson(mu_flattened)
   
 }
 
