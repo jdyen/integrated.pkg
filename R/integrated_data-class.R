@@ -35,7 +35,7 @@
 
 
 ## COULD BE "BUILD/DEFINE integrated_data" if we can return greta_arrays
-add_integrated_data <- function (data,
+define_integrated_data <- function (data,
                                  process_model,
                                  process_link,
                                  observation_model = 'naive') {
@@ -47,42 +47,43 @@ add_integrated_data <- function (data,
   } 
   
   if (process_link == 'growth') {
-    add_growth_module(data = data,
+    data_module <- define_growth_module(data = data,
                       process_model = process_model,
                       observation_model = observation_model)
   } 
   
   if (process_link == 'abundance') {
-    add_abundance_module(data = data,
+    data_module <- define_abundance_module(data = data,
                          process_model = process_model,
                          observation_model = observation_model)
   } 
   
   if (process_link == 'mark_recapture') {
-    add_mark_recapture_module(data = data,
+    data_module <- define_mark_recapture_module(data = data,
                               process_model = process_model,
                               observation_model = observation_model)
   } 
   
   if (process_link == 'size_abundance') {
-    add_size_abundance_module(data = data,
+    data_module <- define_size_abundance_module(data = data,
                               process_model = process_model,
                               observation_model = observation_model)
   }  
   
   if (process_link == 'biomass') {
-    add_biomass_module(data = data,
+    data_module <- define_biomass_module(data = data,
                        process_model = process_model,
                        observation_model = observation_model)
   }  
   
   if (process_link == 'community') {
-    add_community_module(data = data,
+    data_module <- define_community_module(data = data,
                          process_model = process_model,
                          observation_model = observation_model)
   }  
   
-  data_module <- list(data = data,
+  data_module <- list(data_module = data_module,
+                      data = data,
                       process_model = process_model,
                       process_link = process_link,
                       observation_model = observation_model)
@@ -166,21 +167,23 @@ as.integrated_data <- function (model) {
 }
 
 # internal function: build growth data module
-add_growth_module <- function (data, process_model, observation_model) {
+define_growth_module <- function (data, process_model, observation_model) {
   
+  size_data <- vector('list', length = replicates)
   for (i in seq_len(process_model$replicates)) {
+    size_data_tmp <- vector('list', length = ncol(data))
     for (j in seq_len(ncol(data))) {
-      data_tmp <- matrix(data[, j], ncol = process_model$classes)
-      distribution(data_tmp) <- multinomial(size = sum(data_tmp),
-                                            prob = process_model$parameters$transitions[[i]][, j],
-                                            dim = 1)
+      size_data_tmp[[j]] <- matrix(data[, j], ncol = process_model$classes)
     }
+    size_data[[i]] <- do.call('c', size_data_tmp)
   }
   
+  size_data
+
 }
 
 # internal function: build abundance data module
-add_abundance_module <- function (data, process_model, observation_model) {
+define_abundance_module <- function (data, process_model, observation_model) {
   
   # create output lists
   mu_iterated <- vector("list", length = process_model$replicates)
@@ -194,20 +197,20 @@ add_abundance_module <- function (data, process_model, observation_model) {
   }
   
   mu_flattened <- do.call('c', mu_iterated)
-  data_flattened <- do.call('c', data)
-  distribution(data_flattened) <- poisson(mu_flattened)
+  
+  mu_flattened
   
 }
 
 # internal function: build mark-recapture data module
-add_mark_recapture_module <- function (data, process_model, observation_model) {
+define_mark_recapture_module <- function (data, process_model, observation_model) {
   
   NULL
   
 }
 
 # internal function: build size-abundance data module
-add_size_abundance_module <- function (data, process_model, observation_model) {
+define_size_abundance_module <- function (data, process_model, observation_model) {
   
   data_module <- NULL
   
@@ -216,7 +219,7 @@ add_size_abundance_module <- function (data, process_model, observation_model) {
 }
 
 # internal function: build biomass data module
-build_biomass_module <- function (data, process_model, observation_model) {
+define_biomass_module <- function (data, process_model, observation_model) {
   
   data_module <- NULL
   
@@ -225,7 +228,7 @@ build_biomass_module <- function (data, process_model, observation_model) {
 }
 
 # internal function: build community data module
-add_community_module <- function (data, process_model, observation_model) {
+define_community_module <- function (data, process_model, observation_model) {
   
   data_module <- NULL
   
