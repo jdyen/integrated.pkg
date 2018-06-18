@@ -32,6 +32,9 @@
 #' plot(model)
 #' }
 
+
+
+## COULD BE "BUILD/DEFINE integrated_data" if we can return greta_arrays
 add_integrated_data <- function (data,
                                  process_model,
                                  process_link,
@@ -160,6 +163,9 @@ build_growth_module <- function (data, process_model, observation_model) {
   for (i in seq_len(process_model$replicates)) {
     for (j in seq_len(ncol(data))) {
       data_tmp <- matrix(data[, k], ncol = process_model$classes)
+      
+      ## CAN WE REUTRN TEH GRETA ARRAY RATHER THAN ADDING DISTRIBUTION TO DATA?
+      
       distribution(data_tmp) <- multinomial(size = sum(data_tmp),
                                             prob = process_model$parameters$transitions[[i]][, j],
                                             dim = 1)

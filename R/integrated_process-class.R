@@ -4,7 +4,7 @@
 #' 
 #' @rdname integrated_process
 #' 
-#' @param process
+#' @param type
 #' @param ... additional arguments
 #'
 #' @return An object of class \code{integrated_process}, which can be passed to
@@ -19,7 +19,7 @@
 #' library(integrated)
 #' 
 #' # prepare an example model
-#' data <- define_integrated_process(process = 'IPM')
+#' data <- define_integrated_process(type = 'MPM')
 
 define_integrated_process <- function (type, structure, classes, density_dependence, replicates = 1) {
   
