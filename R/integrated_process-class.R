@@ -40,6 +40,7 @@ define_integrated_process <- function (type, structure, classes, density_depende
     params <- get(structure)(classes = classes, replicates = replicates)
     parameters <- list(transitions = vector('list', length = replicates),
                        standard_deviations = params$standard_deviations)
+    mu_initial <- vector('list', length = replicates)
     for (i in seq_len(replicates)) {
 
       # convert paramters to transition matrices
