@@ -40,7 +40,9 @@ add_integrated_data <- function (data,
                                  process_link,
                                  observation_model = 'naive') {
   
-  if (!(process_link %in% c())) {
+  if (!(process_link %in% c('growth', 'abundance',
+                            'mark_recapture', 'size_abundance',
+                            'biomass', 'community'))) {
     stop('process_link must be a known process module')
   } 
   
