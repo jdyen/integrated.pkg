@@ -170,7 +170,7 @@ add_growth_module <- function (data, process_model, observation_model) {
   
   for (i in seq_len(process_model$replicates)) {
     for (j in seq_len(ncol(data))) {
-      data_tmp <- matrix(data[, k], ncol = process_model$classes)
+      data_tmp <- matrix(data[, j], ncol = process_model$classes)
       distribution(data_tmp) <- multinomial(size = sum(data_tmp),
                                             prob = process_model$parameters$transitions[[i]][, j],
                                             dim = 1)
@@ -193,7 +193,8 @@ add_abundance_module <- function (data, process_model, observation_model) {
                                       dens_form = process_model$density_dependence)
   }
   
-  mu_flattened <- do.call("c", mu_iterated)
+  mu_flattened <- do.call('c', mu_iterated)
+  data_flattened <- do.call('c', data)
   distribution(data) <- poisson(mu_flattened)
   
 }
