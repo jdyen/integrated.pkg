@@ -124,7 +124,7 @@ as.integrated_process <- function (model) {
 }
 
 # internal function: create stage-structured matrix model
-stage <- function(nclass, replicates) {
+stage <- function(classes, replicates) {
   
   # hyperpriors for sds
   demo_sd <- lognormal(mean = 0.0, sd = 1.0, dim = 2)
