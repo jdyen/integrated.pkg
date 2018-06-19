@@ -178,16 +178,12 @@ define_growth_module <- function (data, process_model, observation_model) {
   
   size_data <- vector('list', length = process_model$replicates)
   for (i in seq_len(process_model$replicates)) {
-    size_data_tmp <- vector('list', length = ncol(data))
-    for (j in seq_len(ncol(data))) {
-      size_data_tmp[[j]] <- matrix(data[, j], ncol = process_model$classes)
-    }
-    size_data[[i]] <- do.call('c', size_data_tmp)
-  }
+    size_data[[i]] <- lapply(seq_len(ncol(data)), function(index) data[, index])
+  } 
   
   size_data
   
-}
+} 
 
 # internal function: build abundance data module
 define_abundance_module <- function (data, process_model, observation_model) {
@@ -201,13 +197,13 @@ define_abundance_module <- function (data, process_model, observation_model) {
                                       process_model$density_parameter,
                                       seq_len(ncol(data[[i]])),
                                       dens_form = process_model$density_dependence)
-  }
+  } 
   
   mu_flattened <- do.call('c', mu_iterated)
   
   mu_flattened
   
-}
+} 
 
 # internal function: build mark-recapture data module
 define_mark_recapture_module <- function (data, process_model, observation_model) {
