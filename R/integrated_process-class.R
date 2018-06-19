@@ -41,7 +41,7 @@ define_integrated_process <- function (type, structure, classes, density_depende
     density_parameter <- uniform(min = 0.8, max = 1.2, dim = 1)
 
     # create transition matrix    
-    params <- stage(classes = classes, replicates = replicates)
+    params <- get(structure)(classes = classes, replicates = replicates)
     parameters <- list(transitions = vector('list', length = replicates),
                        standard_deviations = params$standard_deviations)
     mu_initial <- vector('list', length = replicates)
@@ -59,23 +59,18 @@ define_integrated_process <- function (type, structure, classes, density_depende
     
   }
   
-  out <- list(parameters = parameters,
-              mu_initial = mu_initial,
-              type = type,
-              structure = structure,
-              classes = classes,
-              density_dependence = density_dependence,
-              density_parameter = density_parameter,
-              replicates = replicates)
+  integrated_process <- list(parameters = parameters,
+                             mu_initial = mu_initial,
+                             type = type,
+                             structure = structure,
+                             classes = classes,
+                             density_dependence = density_dependence,
+                             density_parameter = density_parameter,
+                             replicates = replicates)
   
-  integrated.globals$integrated_process <- out
-  
-  NULL
+  integrated_process
   
 }
-
-# create integrated global environment to hold process model
-integrated.globals <- new.env()
 
 #' @rdname integrated_process
 #'

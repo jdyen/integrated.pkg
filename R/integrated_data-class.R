@@ -6,6 +6,7 @@
 #' @rdname integrated_data
 #' 
 #' @param data something
+#' @param integrated_process something
 #' @param process_link something
 #' @param observation_model something else
 #' @param ... additional arguments
@@ -33,6 +34,7 @@
 #' }
 
 define_integrated_data <- function (data,
+                                    integrated_process, 
                                     process_link,
                                     observation_model = 'naive') {
   
@@ -47,34 +49,40 @@ define_integrated_data <- function (data,
     # check if data are formatted correctly
     if (ncol(data) != nrow(data)) {
       data <- make_growth_data_matrix(data = data,
-                                      classes = integrated.globals$integrated_process$classes)
+                                      classes = integrated_process$classes)
     }
     data_module <- define_growth_module(data = data,
+                                        integrated_process = integrated_process, 
                                         observation_model = observation_model)
   }   
   
   if (process_link == 'abundance') {
     data_module <- define_abundance_module(data = data,
+                                           integrated_process = integrated_process, 
                                            observation_model = observation_model)
   }  
   
   if (process_link == 'mark_recapture') {
     data_module <- define_mark_recapture_module(data = data,
+                                                integrated_process = integrated_process, 
                                                 observation_model = observation_model)
   }  
   
   if (process_link == 'size_abundance') {
     data_module <- define_size_abundance_module(data = data,
+                                                integrated_process = integrated_process, 
                                                 observation_model = observation_model)
   }   
   
   if (process_link == 'biomass') {
     data_module <- define_biomass_module(data = data,
+                                         integrated_process = integrated_process, 
                                          observation_model = observation_model)
   }   
   
   if (process_link == 'community') {
     data_module <- define_community_module(data = data,
+                                           integrated_process = integrated_process, 
                                            observation_model = observation_model)
   }   
   
@@ -162,13 +170,13 @@ as.integrated_data <- function (model) {
 }
 
 # internal function: build growth data module
-define_growth_module <- function (data, observation_model) {
+define_growth_module <- function (data, integrated_process, observation_model) {
   
-  size_data <- vector('list', length = integrated.globals$integrated_process$replicates)
-  for (i in seq_len(integrated.globals$integrated_process$replicates)) {
+  size_data <- vector('list', length = integrated_process$replicates)
+  for (i in seq_len(integrated_process$replicates)) {
     size_data[[i]] <- lapply(seq_len(ncol(data)),
-                             function(index) matrix(data[, index],
-                                                    ncol = integrated.globals$integrated_process$classes))
+                             function(index) greta::as_data(matrix(data[, index],
+                                                                   ncol = integrated_process$classes)))
   } 
   
   size_data
@@ -176,17 +184,17 @@ define_growth_module <- function (data, observation_model) {
 } 
 
 # internal function: build abundance data module
-define_abundance_module <- function (data, observation_model) {
+define_abundance_module <- function (data, integrated_process, observation_model) {
   
   # create output lists
-  mu_iterated <- vector("list", length = integrated.globals$integrated_process$replicates)
+  mu_iterated <- vector("list", length = integrated_process$replicates)
   
-  for (i in seq_len(integrated.globals$integrated_process$replicates)) {
-    mu_iterated[[i]] <- iterate_state(t(integrated.globals$integrated_process$parameters$transitions[[i]]),
-                                      integrated.globals$integrated_process$mu_initial[[i]],
-                                      integrated.globals$integrated_process$density_parameter,
+  for (i in seq_len(integrated_process$replicates)) {
+    mu_iterated[[i]] <- iterate_state(t(integrated_process$parameters$transitions[[i]]),
+                                      integrated_process$mu_initial[[i]],
+                                      integrated_process$density_parameter,
                                       seq_len(ncol(data[[i]])),
-                                      dens_form = integrated.globals$integrated_process$density_dependence)
+                                      dens_form = integrated_process$density_dependence)
   } 
   
   mu_flattened <- do.call('c', mu_iterated)
@@ -196,14 +204,14 @@ define_abundance_module <- function (data, observation_model) {
 } 
 
 # internal function: build mark-recapture data module
-define_mark_recapture_module <- function (data, observation_model) {
+define_mark_recapture_module <- function (data, integrated_process, observation_model) {
   
   NULL
   
 }
 
 # internal function: build size-abundance data module
-define_size_abundance_module <- function (data, observation_model) {
+define_size_abundance_module <- function (data, integrated_process, observation_model) {
   
   data_module <- NULL
   
@@ -212,7 +220,7 @@ define_size_abundance_module <- function (data, observation_model) {
 }
 
 # internal function: build biomass data module
-define_biomass_module <- function (data, observation_model) {
+define_biomass_module <- function (data, integrated_process, observation_model) {
   
   data_module <- NULL
   
@@ -221,7 +229,7 @@ define_biomass_module <- function (data, observation_model) {
 }
 
 # internal function: build community data module
-define_community_module <- function (data, observation_model) {
+define_community_module <- function (data, integrated_process, observation_model) {
   
   data_module <- NULL
   

@@ -27,7 +27,7 @@
 #' plot(model)
 #' }
 
-build_integrated_model <- function (...) {
+build_integrated_model <- function (integrated_process, ...) {
   
   data_modules <- list(...)
   
@@ -50,7 +50,7 @@ build_integrated_model <- function (...) {
         for (j in seq_along(data_tmp$data_module[[i]])) {
           greta::distribution(data_tmp$data_module[[i]][[j]]) <-
             greta::multinomial(size = sum(data_tmp$data_module[[i]][[j]]),
-                               prob = integrated.globals$integrated_process$parameters$transitions[[i]][, j],
+                               prob = integrated_process$parameters$transitions[[i]][, j],
                                dim = 1)
         }
       }
@@ -59,7 +59,7 @@ build_integrated_model <- function (...) {
     
   } 
   
-  integrated_model <- do.call('c', integrated.globals$integrated_process$parameters$transitions)
+  integrated_model <- do.call('c', integrated_process$parameters$transitions)
   
 }
 
