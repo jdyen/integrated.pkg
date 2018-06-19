@@ -68,10 +68,12 @@ define_integrated_process <- function (type, structure, classes, density_depende
               density_parameter = density_parameter,
               replicates = replicates)
   
-  integrated.globals <- new.env()
   integrated.globals$integrated_process <- out
   
 }
+
+# create integrated global environment to hold process model
+integrated.globals <- new.env()
 
 #' @rdname integrated_process
 #'

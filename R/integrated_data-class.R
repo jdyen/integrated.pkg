@@ -6,7 +6,6 @@
 #' @rdname integrated_data
 #' 
 #' @param data something
-#' @param process_model something
 #' @param process_link something
 #' @param observation_model something else
 #' @param ... additional arguments
@@ -33,11 +32,7 @@
 #' plot(model)
 #' }
 
-
-
-## COULD BE "BUILD/DEFINE integrated_data" if we can return greta_arrays
 define_integrated_data <- function (data,
-                                    process_model,
                                     process_link,
                                     observation_model = 'naive') {
   
@@ -55,43 +50,36 @@ define_integrated_data <- function (data,
                                       classes = process_model$classes)
     }
     data_module <- define_growth_module(data = data,
-                                        process_model = process_model,
                                         observation_model = observation_model)
   }   
   
   if (process_link == 'abundance') {
     data_module <- define_abundance_module(data = data,
-                                           process_model = process_model,
                                            observation_model = observation_model)
   }  
   
   if (process_link == 'mark_recapture') {
     data_module <- define_mark_recapture_module(data = data,
-                                                process_model = process_model,
                                                 observation_model = observation_model)
   }  
   
   if (process_link == 'size_abundance') {
     data_module <- define_size_abundance_module(data = data,
-                                                process_model = process_model,
                                                 observation_model = observation_model)
   }   
   
   if (process_link == 'biomass') {
     data_module <- define_biomass_module(data = data,
-                                         process_model = process_model,
                                          observation_model = observation_model)
   }   
   
   if (process_link == 'community') {
     data_module <- define_community_module(data = data,
-                                           process_model = process_model,
                                            observation_model = observation_model)
   }   
   
   data_module <- list(data_module = data_module,
                       data = data,
-                      process_model = process_model,
                       process_link = process_link,
                       observation_model = observation_model)
   

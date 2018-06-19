@@ -4,7 +4,7 @@
 #' 
 #' @rdname integrated_model
 #' 
-#' @param ... \code{integrated_data} objects created with \link[integrated]{build_integrated_data}
+#' @param ... \code{integrated_data} objects created with \link[integrated]{define_integrated_data}
 #'
 #' @return An object of class \code{integrated_model}, which can be passed to
 #'    \link[greta]{mcmc} and has associated `print`, `plot`, and `summary` methods
@@ -27,7 +27,7 @@
 #' plot(model)
 #' }
 
-build_integrated_model <- function (process_model, ...) {
+build_integrated_model <- function (...) {
   
   data_modules <- list(...)
   
