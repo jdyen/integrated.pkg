@@ -6,8 +6,8 @@
 #' @rdname integrated_data
 #' 
 #' @param data something
-#' @param process_model
-#' @param process_link
+#' @param process_model something
+#' @param process_link something
 #' @param observation_model something else
 #' @param ... additional arguments
 #'
@@ -17,6 +17,7 @@
 #' @export
 #' 
 #' @import greta
+#' @import gretaDynamics
 #' 
 #' @examples
 #' 

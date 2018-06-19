@@ -17,6 +17,16 @@ is.integrated_process(model)
 \method{summary}{integrated_process}(object, ...)
 }
 \arguments{
+\item{type}{something}
+
+\item{structure}{something}
+
+\item{classes}{something}
+
+\item{density_dependence}{something}
+
+\item{replicates}{number of distinct populations}
+
 \item{...}{additional arguments}
 }
 \value{

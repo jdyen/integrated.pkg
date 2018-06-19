@@ -4,7 +4,11 @@
 #' 
 #' @rdname integrated_process
 #' 
-#' @param type
+#' @param type something
+#' @param structure something
+#' @param classes something
+#' @param density_dependence something
+#' @param replicates number of distinct populations
 #' @param ... additional arguments
 #'
 #' @return An object of class \code{integrated_process}, which can be passed to
