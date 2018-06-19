@@ -47,7 +47,7 @@ define_integrated_data <- function (data,
     # check if data are formatted correctly
     if (ncol(data) != nrow(data)) {
       data <- make_growth_data_matrix(data = data,
-                                      classes = process_model$classes)
+                                      classes = integrated.globals$integrated_process$classes)
     }
     data_module <- define_growth_module(data = data,
                                         observation_model = observation_model)
