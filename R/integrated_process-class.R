@@ -70,6 +70,8 @@ define_integrated_process <- function (type, structure, classes, density_depende
   
   integrated.globals$integrated_process <- out
   
+  NULL
+  
 }
 
 # create integrated global environment to hold process model
