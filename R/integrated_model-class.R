@@ -61,8 +61,6 @@ build_integrated_model <- function (...) {
   
   integrated_model <- do.call('c', integrated.globals$integrated_process$parameters$transitions)
   
-  as.integrated_model(integrated_model)
-
 }
 
 #' @rdname integrated_model
@@ -131,10 +129,4 @@ summary.integrated_model <- function (object, ...) {
   
   NULL
   
-}
-
-
-# internal function: create integrated_model object
-as.integrated_model <- function (model) {
-  as_class(model, name = 'integrated_model', type = 'list')
 }
