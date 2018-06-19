@@ -27,16 +27,41 @@
 #' plot(model)
 #' }
 
-build_integrated_model <- function (...) {
+build_integrated_model <- function (process_model, ...) {
   
-  component_data <- list(...)
+  data_modules <- list(...)
   
-  greta_model <- NULL
+  for (i in seq_along(data_modules)) {
+    
+    data_tmp <- data_modules[[i]]
+    
+    if (!(data_tmp$process_link %in% c('abundance', 'growth'))) {
+      stop('only abundance and growth modules are currently implemented')
+    }
+    
+    if (data_tmp$process_link == 'abundance') {
+      data <- do.call('c', data_tmp$data)
+      greta::distribution(data) <- greta::poisson(data_tmp$data_module)
+    }
+    
+    if (data_tmp$process_link == 'growth') {
+      
+      for (i in seq_along(data_tmp$data_module)) {
+        for (j in seq_along(data_tmp$data_module[[i]])) {
+          greta::distribution(data_tmp$data_module[[i]][[j]]) <-
+            greta::multinomial(size = sum(data_tmp$data_module[[i]][[j]]),
+                               prob = integrated.globals$integrated_process$parameters$transitions[[i]][, j],
+                               dim = 1)
+        }
+      }
+      
+    }
+    
+  } 
   
-  out <- list(greta_model = greta_model,
-              component_data = component_data)
+  integrated_model <- do.call('c', integrated.globals$integrated_process$parameters$transitions)
   
-  as.integrated_model(out)
+  as.integrated_model(integrated_model)
 
 }
 

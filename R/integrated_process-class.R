@@ -68,7 +68,8 @@ define_integrated_process <- function (type, structure, classes, density_depende
               density_parameter = density_parameter,
               replicates = replicates)
   
-  as.integrated_process(out)
+  integrated.globals <- new.env()
+  integrated.globals$integrated_process <- out
   
 }
 
