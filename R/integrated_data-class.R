@@ -37,9 +37,9 @@
 
 ## COULD BE "BUILD/DEFINE integrated_data" if we can return greta_arrays
 define_integrated_data <- function (data,
-                                 process_model,
-                                 process_link,
-                                 observation_model = 'naive') {
+                                    process_model,
+                                    process_link,
+                                    observation_model = 'naive') {
   
   if (!(process_link %in% c('growth', 'abundance',
                             'mark_recapture', 'size_abundance',
@@ -49,38 +49,38 @@ define_integrated_data <- function (data,
   
   if (process_link == 'growth') {
     data_module <- define_growth_module(data = data,
-                      process_model = process_model,
-                      observation_model = observation_model)
+                                        process_model = process_model,
+                                        observation_model = observation_model)
   } 
   
   if (process_link == 'abundance') {
     data_module <- define_abundance_module(data = data,
-                         process_model = process_model,
-                         observation_model = observation_model)
+                                           process_model = process_model,
+                                           observation_model = observation_model)
   } 
   
   if (process_link == 'mark_recapture') {
     data_module <- define_mark_recapture_module(data = data,
-                              process_model = process_model,
-                              observation_model = observation_model)
+                                                process_model = process_model,
+                                                observation_model = observation_model)
   } 
   
   if (process_link == 'size_abundance') {
     data_module <- define_size_abundance_module(data = data,
-                              process_model = process_model,
-                              observation_model = observation_model)
+                                                process_model = process_model,
+                                                observation_model = observation_model)
   }  
   
   if (process_link == 'biomass') {
     data_module <- define_biomass_module(data = data,
-                       process_model = process_model,
-                       observation_model = observation_model)
+                                         process_model = process_model,
+                                         observation_model = observation_model)
   }  
   
   if (process_link == 'community') {
     data_module <- define_community_module(data = data,
-                         process_model = process_model,
-                         observation_model = observation_model)
+                                           process_model = process_model,
+                                           observation_model = observation_model)
   }  
   
   data_module <- list(data_module = data_module,
@@ -138,9 +138,9 @@ print.integrated_data <- function (x, ...) {
 #' }
 
 plot.integrated_data <- function (x, ...) {
-
+  
   plot(x$greta_model, ...)
-
+  
 }
 
 #' @rdname integrated_data
@@ -170,7 +170,7 @@ as.integrated_data <- function (model) {
 # internal function: build growth data module
 define_growth_module <- function (data, process_model, observation_model) {
   
-  size_data <- vector('list', length = replicates)
+  size_data <- vector('list', length = process_model$replicates)
   for (i in seq_len(process_model$replicates)) {
     size_data_tmp <- vector('list', length = ncol(data))
     for (j in seq_len(ncol(data))) {
@@ -180,7 +180,7 @@ define_growth_module <- function (data, process_model, observation_model) {
   }
   
   size_data
-
+  
 }
 
 # internal function: build abundance data module
