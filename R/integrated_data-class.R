@@ -45,43 +45,49 @@ define_integrated_data <- function (data,
                             'mark_recapture', 'size_abundance',
                             'biomass', 'community'))) {
     stop('process_link must be a known process module')
-  } 
+  }  
   
   if (process_link == 'growth') {
+    
+    # check if data are formatted correctly
+    if (ncol(data) != nrow(data)) {
+      data <- make_growth_data_matrix(data = data,
+                                      classes = process_model$classes)
+    }
     data_module <- define_growth_module(data = data,
                                         process_model = process_model,
                                         observation_model = observation_model)
-  } 
+  }   
   
   if (process_link == 'abundance') {
     data_module <- define_abundance_module(data = data,
                                            process_model = process_model,
                                            observation_model = observation_model)
-  } 
+  }  
   
   if (process_link == 'mark_recapture') {
     data_module <- define_mark_recapture_module(data = data,
                                                 process_model = process_model,
                                                 observation_model = observation_model)
-  } 
+  }  
   
   if (process_link == 'size_abundance') {
     data_module <- define_size_abundance_module(data = data,
                                                 process_model = process_model,
                                                 observation_model = observation_model)
-  }  
+  }   
   
   if (process_link == 'biomass') {
     data_module <- define_biomass_module(data = data,
                                          process_model = process_model,
                                          observation_model = observation_model)
-  }  
+  }   
   
   if (process_link == 'community') {
     data_module <- define_community_module(data = data,
                                            process_model = process_model,
                                            observation_model = observation_model)
-  }  
+  }   
   
   data_module <- list(data_module = data_module,
                       data = data,
@@ -236,3 +242,52 @@ define_community_module <- function (data, process_model, observation_model) {
   data_module
   
 }
+
+# internal function: convert growth data in long format to matrix used by multinomial
+make_growth_data_matrix <- function(data, classes) {
+  
+  nbreaks <- classes + 1
+  
+  # calculate size_now and size_next
+  size_now <- NULL
+  size_next <- NULL
+  id <- NULL
+  sizemax <- max(tapply(data$growth, data$id, sum, na.rm = TRUE),
+                 na.rm = TRUE)
+  for (i in seq_along(unique(data$id))) {
+    data_sub <- data[data$id == unique(data$id)[i], ]
+    size_tmp <- cumsum(data_sub$growth[order(data_sub$year)])
+    for (j in seq_len((length(size_tmp) - 1))) {
+      size_now <- c(size_now, size_tmp[j])
+      size_next <- c(size_next, size_tmp[j + 1])
+      id <- c(id, unique(data_sub$id)[1])
+    }
+  }
+  data_clean <- data.frame(id = id,
+                           size_now = (size_now / sizemax),
+                           size_next = (size_next / sizemax)) 
+  
+  # calculate breaks
+  break_set <- c(0, quantile(data_clean$size_now,
+                             p = seq(0.1, 0.9, length = (nbreaks - 2))), 1)
+  
+  label_set <- seq_len(length(break_set) - 1)
+  data_clean$bin_now <- as.numeric(cut(data_clean$size_now,
+                                       breaks = break_set,
+                                       labels = label_set))
+  data_clean$bin_next <- as.numeric(cut(data_clean$size_next,
+                                        breaks = break_set,
+                                        labels = label_set)) 
+  
+  # calculate transition probabilities  
+  growth_matrix <- matrix(0, nrow = (nbreaks - 1), ncol = (nbreaks - 1))
+  for (i in seq_len(nrow(data_clean))) {
+    xind <- data_clean$bin_next[i]
+    yind <- data_clean$bin_now[i]
+    growth_matrix[xind, yind] <- growth_matrix[xind, yind] + 1
+  }
+  
+  growth_matrix
+  
+}
+
