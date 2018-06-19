@@ -178,7 +178,8 @@ define_growth_module <- function (data, process_model, observation_model) {
   
   size_data <- vector('list', length = process_model$replicates)
   for (i in seq_len(process_model$replicates)) {
-    size_data[[i]] <- lapply(seq_len(ncol(data)), function(index) data[, index])
+    size_data[[i]] <- lapply(seq_len(ncol(data)),
+                             function(index) matrix(data[, index], ncol = process_model$classes))
   } 
   
   size_data
