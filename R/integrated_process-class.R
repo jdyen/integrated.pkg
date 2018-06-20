@@ -25,14 +25,26 @@
 #' # prepare an example model
 #' data <- define_integrated_process(type = 'MPM')
 
-define_integrated_process <- function (type, structure, classes, density_dependence, replicates = 1) {
+define_integrated_process <- function (type, classes, structure = 'stage', replicates = 1) {
   
   if (!(type %in% c('IPM', 'MPM'))) {
     stop('type must be one of IPM or MPM')
   }
   
   if (type == 'IPM') {
-    stop('IPM models not currently implemented')
+    
+    parameters <- list()
+    parameters$transitions <- build_integrated_ipm(classes = classes,
+                                                   replicates = replicates,
+                                                   gp_tol = 1e-5)
+    
+    mu_initial <- lapply(seq_len(replicates),
+                         function(x) greta::lognormal(meanlog = 0.0,
+                                                      sdlog = 2.0,
+                                                      dim = classes))
+    
+    structure <- 'IPM'
+
   }
   
   if (type == 'MPM') {
@@ -44,7 +56,10 @@ define_integrated_process <- function (type, structure, classes, density_depende
     params <- get(structure)(classes = classes, replicates = replicates)
     parameters <- list(transitions = vector('list', length = replicates),
                        standard_deviations = params$standard_deviations)
-    mu_initial <- lapply(seq_len(replicates), function(x) greta::lognormal(meanlog = 0.0, sdlog = 2.0, dim = classes))
+    mu_initial <- lapply(seq_len(replicates),
+                         function(x) greta::lognormal(meanlog = 0.0,
+                                                      sdlog = 2.0,
+                                                      dim = classes))
     parameters$transitions <- lapply(seq_len(replicates),
                                      function(i) array(do.call('c', lapply(params$transitions, function(x) x[i])),
                                                        dim = c(classes, classes)))
@@ -55,8 +70,6 @@ define_integrated_process <- function (type, structure, classes, density_depende
                              type = type,
                              structure = structure,
                              classes = classes,
-                             density_dependence = density_dependence,
-                             density_parameter = density_parameter,
                              replicates = replicates)
   
   integrated_process
@@ -120,7 +133,7 @@ as.integrated_process <- function (model) {
 }
 
 # internal function: create stage-structured matrix model
-stage <- function(classes, replicates) {
+stage <- function (classes, replicates) {
   
   # hyperpriors for sds
   demo_sd <- greta::lognormal(mean = 0.0, sd = 1.0, dim = 2)
@@ -159,7 +172,7 @@ stage <- function(classes, replicates) {
 }
 
 # internal function: create age-structured matrix model
-age <- function(classes, replicates) {
+age <- function (classes, replicates) {
   
   # hyperpriors for sds
   demo_sd <- greta::lognormal(mean = 0.0, sd = 3.0, dim = 2)
@@ -201,7 +214,7 @@ age <- function(classes, replicates) {
 }
 
 # internal function: create unstructured matrix model
-unstructured <- function(classes, replicates) {
+unstructured <- function (classes, replicates) {
   
   # hyperpriors for sds
   demo_sd <- greta::lognormal(mean = 0.0, sd = 3.0, dim = 2)
@@ -228,4 +241,58 @@ unstructured <- function(classes, replicates) {
   
   params
   
+}
+
+# internal function: create an IPM evaluated at `classes`
+build_integrated_ipm <- function (classes, replicates, gp_tol) {
+  
+  params <- vector('list', length = replicates)
+  
+  for (i in seq_len(replicates)) {
+    
+    # ipm transition kernel
+    ipm_len <- greta::lognormal(mean = 0.0, sd = 1.0, dim = 1)
+    ipm_sigma <- greta::lognormal(mean = 0.0, sd = 3.0, dim = 1)
+    ipm_kern <- gretaGP::rbf(lengthscales = ipm_len, variance = ipm_sigma)
+    ipm_mean <- greta::ilogit(gretaGP::gp(x = seq_len(classes),
+                                          kernel = ipm_kern,
+                                          tol = gp_tol))
+    ipm_sigma_main <- greta::lognormal(mean = 0.0, sd = 3.0, dim = 1)
+    
+    # survival kernel
+    surv_len <- greta::lognormal(mean = 0.0, sd = 1.0, dim = 1)
+    surv_sigma <- greta::lognormal(mean = 0.0, sd = 3.0, dim = 1)
+    surv_kern <- gretaGP::rbf(lengthscales = surv_len, variance = surv_sigma)
+    ipm_surv <- greta::ilogit(gretaGP::gp(x = seq_len(classes),
+                                          kernel = surv_kern,
+                                          tol = gp_tol))
+    
+    # fecundity kernel
+    fec_len <- greta::lognormal(mean = 0.0, sd = 1.0, dim = 1)
+    fec_sigma <- greta::lognormal(mean = 0.0, sd = 3.0, dim = 1)
+    fec_kern <- gretaGP::rbf(lengthscales = fec_len, variance = fec_sigma)
+    ipm_fec <- exp(gretaGP::gp(x = seq_len(classes),
+                               kernel = fec_kern,
+                               tol = gp_tol))
+    
+    # convert flattened vector into matrix
+    bins_mat <- matrix(rep(seq_len(classes), times = classes), ncol = classes)
+    ipm_dist <- greta::sweep(greta::as_data(bins_mat), 2, ipm_mean, '-')
+    ipm <- exp(-(ipm_dist * ipm_dist) / (2 * ipm_sigma_main))
+    
+    # standardise so that columns sum to one
+    ipm <- greta::sweep(ipm, 2, greta::colSums(ipm), '/')
+    
+    # standardise to incorporate survival per column
+    ipm <- greta::sweep(ipm, 2, ipm_surv, '*')
+    
+    # add fecundity elements to kernel
+    ipm[1, ] <- ipm[1, ] + t(ipm_fec)
+    
+    params[[i]] <- ipm
+    
+  }
+  
+  params
+   
 }
