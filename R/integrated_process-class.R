@@ -45,9 +45,9 @@ define_integrated_process <- function (type, structure, classes, density_depende
     parameters <- list(transitions = vector('list', length = replicates),
                        standard_deviations = params$standard_deviations)
     mu_initial <- lapply(seq_len(replicates), function(x) greta::lognormal(meanlog = 0.0, sdlog = 2.0, dim = classes))
-    parameters$transitions <- lapply(seq_len(replicates),
-                                     function(i) array(do.call('c', lapply(params$transitions, function(x) x[i])),
-                                                       dim = c(classes, classes)))
+    parameters$transitions <- lapply(seq_len(replicates), function(x) array(params$transitions[, , x],
+                                                                             dim = c(classes, classes)))
+
   }
   
   integrated_process <- list(parameters = parameters,
@@ -122,35 +122,37 @@ as.integrated_process <- function (model) {
 # internal function: create stage-structured matrix model
 stage <- function(classes, replicates) {
   
-  # hyperpriors for sds
-  demo_sd <- greta::lognormal(mean = 0.0, sd = 1.0, dim = 2)
+  demo_sd <- greta::lognormal(mean = rep(0.0, 3), sd = c(3.0, 3.0, 0.0001), dim = 3)
   
-  # fecundity and survival priors
-  transitions <- vector("list", length = (classes * classes))
-  transitions[[1]] <- greta::ilogit(greta::normal(mean = 0.0,
-                                                  sd = demo_sd[1],
-                                                  dim = replicates))
-  for (i in 2:(classes - 1)) {
-    transitions[[i]] <- greta::uniform(min = 0.0, max = 0.0001, dim = replicates)
-  }  
-  transitions[[classes]] <- greta::lognormal(mean = 0.0,
-                                             sd = demo_sd[2],
-                                             dim = replicates)   
-  for (i in seq_len(classes)[-1]) {
-    for (j in seq_len(classes)) {
-      if ((j == (i - 1)) | (j == (i - 2)) | (j == i)) {
-        transitions[[((i - 1) * classes) + j]] <- greta::ilogit(greta::normal(mean = 0.0,
-                                                                              sd = demo_sd[1],
-                                                                              dim = replicates))
-      } else {  
-        transitions[[((i - 1) * classes) + j]] <- greta::uniform(min = 0.0,
-                                                                 max = 0.0001,
-                                                                 dim = replicates)
+  array_mean <- array(data = -10, dim = c(classes, classes, replicates))
+  array_mean_fec <- array(data = 0, dim = c(classes, classes, replicates))
+  for (i in seq_len(classes)) {
+    array_mean[i, i, ] <- rep(0, replicates)
+    if (i < classes) {
+      array_mean[(i + 1), i, ] <- rep(0, replicates)
+      if (i < (classes - 1)) {
+        array_mean[(i + 2), i, ] <- rep(0, replicates)
       }
     }
-  }  
+  }
   
-  # collate outputs
+  array_sd <- array(rep(demo_sd[1], (classes * classes * replicates)),
+                    dim = dim(array_mean))
+  array_sd_fec <- array(rep(c(rep(demo_sd[3], (classes - 1)), demo_sd[2],
+                              rep(demo_sd[3], ((classes - 1) * classes))), replicates),
+                        dim = dim(array_mean))
+  
+  # define parameters  
+  surv_params <- greta::ilogit(greta::normal(mean = array_mean,
+                                             sd = array_sd,
+                                             dim = dim(array_mean)))
+  fec_params <- greta::lognormal(meanlog = array_mean_fec,
+                                 sdlog = array_sd_fec,
+                                 dim = dim(array_mean_fec))
+  
+  # return outputs
+  transitions <- surv_params + fec_params
+  
   params <- list(transitions = transitions,
                  standard_deviations = demo_sd)
   
@@ -161,38 +163,32 @@ stage <- function(classes, replicates) {
 # internal function: create age-structured matrix model
 age <- function(classes, replicates) {
   
-  # hyperpriors for sds
-  demo_sd <- greta::lognormal(mean = 0.0, sd = 3.0, dim = 2)
+  demo_sd <- greta::lognormal(mean = rep(0.0, 3), sd = c(3.0, 3.0, 0.0001), dim = 3)
   
-  # fecundity and survival priors
-  transitions <- vector("list", length = (classes * classes))
-  for (i in 1:(classes - 1)) {
-    transitions[[i]] <- greta::uniform(min = 0.0, max = 0.0001, dim = replicates)
-  }
-  transitions[[classes]] <- greta::lognormal(mean = 0.0,
-                                             sd = demo_sd[1],
-                                             dim = replicates)
-  for (i in seq_len(classes)[-1]) {
-    for (j in seq_len(classes)) {
-      if (j == (i - 1)) {
-        transitions[[((i - 1) * classes) + j]] <- greta::ilogit(greta::normal(mean = 0.0,
-                                                                              sd = demo_sd[2],
-                                                                              dim = replicates))
-      } else {
-        if ((i == classes) & (j == classes)) {
-          transitions[[((i - 1) * classes) + j]] <- greta::ilogit(greta::normal(mean = 0.0,
-                                                                                sd = demo_sd[2],
-                                                                                dim = replicates))
-        } else { 
-          transitions[[((i - 1) * classes) + j]] <- greta::uniform(min = 0.0,
-                                                                   max = 0.0001,
-                                                                   dim = replicates)
-        }
-      } 
-    }
+  array_mean <- array(data = -10, dim = c(classes, classes, replicates))
+  array_mean_fec <- array(data = 0, dim = c(classes, classes, replicates))
+  array_mean[classes, classes, ] <- rep(0, replicates)
+  for (i in seq_len(classes - 1)) {
+    array_mean[(i + 1), i, ] <- rep(0, replicates)
   }
   
-  # collate outputs
+  array_sd <- array(rep(demo_sd[1], (classes * classes * replicates)),
+                    dim = dim(array_mean))
+  array_sd_fec <- array(rep(c(rep(demo_sd[3], (classes - 1)), demo_sd[2],
+                              rep(demo_sd[3], ((classes - 1) * classes))), replicates),
+                        dim = dim(array_mean))
+  
+  # define parameters  
+  surv_params <- greta::ilogit(greta::normal(mean = array_mean,
+                                             sd = array_sd,
+                                             dim = dim(array_mean)))
+  fec_params <- greta::lognormal(meanlog = array_mean_fec,
+                                 sdlog = array_sd_fec,
+                                 dim = dim(array_mean_fec))
+  
+  # return outputs
+  transitions <- surv_params + fec_params
+  
   params <- list(transitions = transitions,
                  standard_deviations = demo_sd)
   
@@ -203,28 +199,29 @@ age <- function(classes, replicates) {
 # internal function: create unstructured matrix model
 unstructured <- function(classes, replicates) {
   
-  # hyperpriors for sds
-  demo_sd <- greta::lognormal(mean = 0.0, sd = 3.0, dim = 2)
+  demo_sd <- greta::lognormal(mean = rep(0.0, 3), sd = c(3.0, 3.0, 0.0001), dim = 3)
   
-  # fecundity and survival priors
-  transitions <- vector('list', length = (classes * classes))
-  transitions[[1]] <- greta::ilogit(greta::normal(mean = 0.0,
-                                                  sd = demo_sd[1],
-                                                  dim = replicates))
-  for (i in seq_len(classes)[-1]) {
-    transitions[[i]] <- greta::lognormal(mean = 0.0,
-                                         sd = demo_sd[2],
-                                         dim = replicates)
-  }
-  for (i in (classes + 1):length(transitions)) {
-    transitions[[i]] <- greta::ilogit(greta::normal(mean = 0.0,
-                                                    sd = demo_sd[2],
-                                                    dim = replicates))
-  }  
+  array_mean <- array(data = 0, dim = c(classes, classes, replicates))
+  array_mean_fec <- array(data = 0, dim = c(classes, classes, replicates))
+  array_sd <- array(rep(demo_sd[1], (classes * classes * replicates)),
+                    dim = dim(array_mean))
+  array_sd_fec <- array(rep(c(rep(demo_sd[2], classes),
+                              rep(demo_sd[3], ((classes - 1) * classes))), replicates),
+                        dim = dim(array_mean))
   
-  # collate outputs
+  # define parameters  
+  surv_params <- greta::ilogit(greta::normal(mean = array_mean,
+                                             sd = array_sd,
+                                             dim = dim(array_mean)))
+  fec_params <- greta::lognormal(meanlog = array_mean_fec,
+                                 sdlog = array_sd_fec,
+                                 dim = dim(array_mean_fec))
+  
+  # return outputs
+  transitions <- surv_params + fec_params
+  
   params <- list(transitions = transitions,
-                 standard_deviations = demo_sd) 
+                 standard_deviations = demo_sd)
   
   params
   
