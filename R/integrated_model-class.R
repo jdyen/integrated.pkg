@@ -59,7 +59,7 @@ build_integrated_model <- function (integrated_process, ...) {
     
   } 
   
-  integrated_model <- do.call('c', integrated_process$parameters$transitions)
+  do.call('c', integrated_process$parameters$transitions)
   
 }
 
