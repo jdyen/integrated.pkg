@@ -8,7 +8,7 @@
 \alias{summary.integrated_data}
 \title{An integrated data object}
 \usage{
-define_integrated_data(data, process_model, process_link,
+define_integrated_data(data, integrated_process, process_link,
   observation_model = "naive")
 
 is.integrated_data(model)
@@ -22,7 +22,7 @@ is.integrated_data(model)
 \arguments{
 \item{data}{something}
 
-\item{process_model}{something}
+\item{integrated_process}{something}
 
 \item{process_link}{something}
 

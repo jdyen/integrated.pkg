@@ -17,7 +17,7 @@
 #' @export
 #' 
 #' @import greta
-#' @import gretaDynamics
+#' @import greta.dynamics
 #' 
 #' @examples
 #' 

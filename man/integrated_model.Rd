@@ -8,7 +8,7 @@
 \alias{summary.integrated_model}
 \title{An integrated model object}
 \usage{
-build_integrated_model(...)
+build_integrated_model(integrated_process, ...)
 
 is.integrated_model(model)
 
@@ -19,7 +19,7 @@ is.integrated_model(model)
 \method{summary}{integrated_model}(object, ...)
 }
 \arguments{
-\item{...}{\code{integrated_data} objects created with \link[integrated]{build_integrated_data}}
+\item{...}{\code{integrated_data} objects created with \link[integrated]{define_integrated_data}}
 }
 \value{
 An object of class \code{integrated_model}, which can be passed to
