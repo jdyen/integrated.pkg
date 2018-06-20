@@ -17,7 +17,7 @@
 #' @export
 #' 
 #' @import greta
-#' @import gretaDynamics
+#' @import greta.dynamics
 #' 
 #' @examples
 #' 
@@ -190,14 +190,9 @@ define_abundance_module <- function (data, integrated_process, observation_model
   mu_iterated <- vector("list", length = integrated_process$replicates)
   
   for (i in seq_len(integrated_process$replicates)) {
-    mu_iterated[[i]] <- greta::greta_array(0,
-                                           dim = c(integrated_process$classes,
-                                                   ncol(data[[i]])))
-    for (j in seq_len(ncol(data[[i]]))) {
-      mu_iterated[[i]][, j] <- iterate_state(integrated_process$parameters$transitions[[i]],
-                                             integrated_process$mu_initial[[i]],
-                                             j)
-    }
+    mu_iterated[[i]] <- iterate_state(integrated_process$parameters$transitions[[i]],
+                                      integrated_process$mu_initial[[i]],
+                                      seq_len(ncol(data[[i]])))
   } 
   
   mu_flattened <- do.call('c', mu_iterated)
