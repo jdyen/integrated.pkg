@@ -132,29 +132,29 @@ as.integrated_process <- function (model) {
 stage <- function(classes, replicates) {
   
   # hyperpriors for sds
-  demo_sd <- lognormal(mean = 0.0, sd = 1.0, dim = 2)
+  demo_sd <- greta::lognormal(mean = 0.0, sd = 1.0, dim = 2)
   
   # fecundity and survival priors
-  params <- vector("list", length = (classes * classes))
-  params[[1]] <- ilogit(normal(mean = 0.0,
-                               sd = demo_sd[1],
-                               dim = replicates))
+  params <- vector('list', length = (classes * classes))
+  params[[1]] <- greta::ilogit(greta::normal(mean = 0.0,
+                                             sd = demo_sd[1],
+                                             dim = replicates))
   for (i in 2:(classes - 1)) {
-    params[[i]] <- uniform(min = 0.0, max = 0.0001, dim = replicates)
+    params[[i]] <- greta::uniform(min = 0.0, max = 0.0001, dim = replicates)
   }
-  params[[classes]] <- lognormal(mean = 0.0,
-                                 sd = demo_sd[2],
-                                 dim = replicates) 
+  params[[classes]] <- greta::lognormal(mean = 0.0,
+                                        sd = demo_sd[2],
+                                        dim = replicates)  
   for (i in seq_len(classes)[-1]) {
     for (j in seq_len(classes)) {
       if ((j == (i - 1)) | (j == (i - 2)) | (j == i)) {
-        params[[((i - 1) * classes) + j]] <- ilogit(normal(mean = 0.0,
-                                                           sd = demo_sd[1],
-                                                           dim = replicates))
+        params[[((i - 1) * classes) + j]] <- greta::ilogit(greta::normal(mean = 0.0,
+                                                                         sd = demo_sd[1],
+                                                                         dim = replicates))
       } else {
-        params[[((i - 1) * classes) + j]] <- uniform(min = 0.0,
-                                                     max = 0.0001,
-                                                     dim = replicates)
+        params[[((i - 1) * classes) + j]] <- greta::uniform(min = 0.0,
+                                                            max = 0.0001,
+                                                            dim = replicates)
       }
     }
   }
@@ -172,25 +172,25 @@ stage <- function(classes, replicates) {
 age <- function(classes, replicates) {
   
   # hyperpriors for sds
-  demo_sd <- lognormal(mean = 0.0, sd = 3.0, dim = (classes + 1))
+  demo_sd <- greta::lognormal(mean = 0.0, sd = 3.0, dim = (classes + 1))
   
   # fecundity and survival priors
   params <- vector("list", length = (classes * classes))
   for (i in 1:(classes - 1)) {
-    params[[i]] <- uniform(min = 0.0, max = 0.0001, dim = replicates)
+    params[[i]] <- greta::uniform(min = 0.0, max = 0.0001, dim = replicates)
   }
-  params[[classes]] <- lognormal(mean = 0.0, sd = demo_sd[1], dim = replicates)
+  params[[classes]] <- greta::lognormal(mean = 0.0, sd = demo_sd[1], dim = replicates)
   for (i in seq_len(classes)[-1]) {
     for (j in seq_len(classes)) {
       if (j == (i - 1)) {
-        params[[((i - 1) * classes) + j]] <- ilogit(normal(mean = 0.0, sd = demo_sd[i],
-                                                           dim = replicates))
+        params[[((i - 1) * classes) + j]] <- greta::ilogit(greta::normal(mean = 0.0, sd = demo_sd[i],
+                                                                         dim = replicates))
       } else {
         if ((i == classes) & (j == classes)) {
-          params[[((i - 1) * classes) + j]] <- ilogit(normal(mean = 0.0, sd = demo_sd[(classes + 1)],
-                                                             dim = replicates))
+          params[[((i - 1) * classes) + j]] <- greta::ilogit(greta::normal(mean = 0.0, sd = demo_sd[(classes + 1)],
+                                                                           dim = replicates))
         } else {
-          params[[((i - 1) * classes) + j]] <- uniform(min = 0.0, max = 0.0001, dim = replicates)
+          params[[((i - 1) * classes) + j]] <- greta::uniform(min = 0.0, max = 0.0001, dim = replicates)
         }
       }
     }
@@ -208,18 +208,18 @@ age <- function(classes, replicates) {
 unstructured <- function(classes, replicates) {
   
   # hyperpriors for sds
-  demo_sd <- lognormal(mean = 0.0, sd = 3.0, dim = (classes + 1))
+  demo_sd <- greta::lognormal(mean = 0.0, sd = 3.0, dim = (classes + 1))
   
   # fecundity and survival priors
   params <- vector("list", length = (classes * classes))
-  params[[1]] <- ilogit(normal(mean = 0.0, sd = demo_sd[1], dim = replicates))
+  params[[1]] <- greta::ilogit(greta::normal(mean = 0.0, sd = demo_sd[1], dim = replicates))
   for (i in 2:nstage) {
-    params[[i]] <- lognormal(mean = 0.0, sd = demo_sd[2], dim = replicates)
+    params[[i]] <- greta::lognormal(mean = 0.0, sd = demo_sd[2], dim = replicates)
   }
   for (i in (classes + 1):length(params)) {
-    params[[i]] <- ilogit(normal(mean = 0.0,
-                                 sd = demo_sd[(floor((i - 1) / classes) + 2)],
-                                 dim = replicates))
+    params[[i]] <- greta::ilogit(greta::normal(mean = 0.0,
+                                               sd = demo_sd[(floor((i - 1) / classes) + 2)],
+                                               dim = replicates))
   }
   
   # collate outputs
