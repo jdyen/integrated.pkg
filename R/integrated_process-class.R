@@ -46,7 +46,7 @@ define_integrated_process <- function (type, structure, classes, density_depende
                        standard_deviations = params$standard_deviations)
     # mu_initial <- vector('list', length = replicates)
     mu_initial <- lapply(seq_len(replicates), function(x) greta::lognormal(meanlog = 0.0, sdlog = 2.0, dim = classes))
-    parameters_transitions <- lapply(seq_len(replicates), function(x) params[, , x])
+    parameters$transitions <- lapply(seq_len(replicates), function(x) params[, , x])
     # for (i in seq_len(replicates)) {
 
       # convert paramters to transition matrices
@@ -162,7 +162,10 @@ stage <- function(classes, replicates) {
                                  dim = dim(array_mean_fec))
   
   # return outputs
-  params <- surv_params + fec_params
+  transitions <- surv_params + fec_params
+  
+  params <- list(transitions = transitions,
+                 standard_deviations = demo_sd)
   
   params
   
