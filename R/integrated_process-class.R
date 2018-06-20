@@ -122,7 +122,7 @@ as.integrated_process <- function (model) {
 # internal function: create stage-structured matrix model
 stage <- function(classes, replicates) {
   
-  demo_sd <- greta::lognormal(mean = rep(0.0, 0.0, -50), sd = c(3.0, 3.0, 0.000001), dim = 3)
+  demo_sd <- greta::lognormal(mean = c(0.0, 0.0, -50), sd = c(3.0, 3.0, 0.000001), dim = 3)
   
   array_mean <- array(data = -10, dim = c(classes, classes, replicates))
   array_mean_fec <- array(data = 0, dim = c(classes, classes, replicates))
@@ -163,7 +163,7 @@ stage <- function(classes, replicates) {
 # internal function: create age-structured matrix model
 age <- function(classes, replicates) {
   
-  demo_sd <- greta::lognormal(mean = rep(0.0, 0.0, -50), sd = c(3.0, 3.0, 0.000001), dim = 3)
+  demo_sd <- greta::lognormal(mean = c(0.0, 0.0, -50), sd = c(3.0, 3.0, 0.000001), dim = 3)
   
   array_mean <- array(data = -10, dim = c(classes, classes, replicates))
   array_mean_fec <- array(data = 0, dim = c(classes, classes, replicates))
@@ -199,7 +199,7 @@ age <- function(classes, replicates) {
 # internal function: create unstructured matrix model
 unstructured <- function(classes, replicates) {
   
-  demo_sd <- greta::lognormal(mean = rep(0.0, 0.0, -50), sd = c(3.0, 3.0, 0.000001), dim = 3)
+  demo_sd <- greta::lognormal(mean = c(0.0, 0.0, -50), sd = c(3.0, 3.0, 0.000001), dim = 3)
   
   array_mean <- array(data = 0, dim = c(classes, classes, replicates))
   array_mean_fec <- array(data = 0, dim = c(classes, classes, replicates))
