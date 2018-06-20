@@ -38,7 +38,7 @@ define_integrated_process <- function (type, structure, classes, density_depende
   if (type == 'MPM') {
     
     # set density dependence prior
-    density_parameter <- uniform(min = 0.8, max = 1.2, dim = 1)
+    density_parameter <- greta::uniform(min = 0.8, max = 1.2, dim = 1)
 
     # create transition matrix    
     params <- get(structure)(classes = classes, replicates = replicates)
@@ -52,7 +52,7 @@ define_integrated_process <- function (type, structure, classes, density_depende
                                            dim = c(classes, classes))
       
       # initial population abundances
-      mu_initial[[i]] <- lognormal(meanlog = 0.0, sdlog = 2.0, dim = classes)
+      mu_initial[[i]] <- greta::lognormal(meanlog = 0.0, sdlog = 2.0, dim = classes)
       
     }
     
