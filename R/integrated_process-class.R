@@ -17,6 +17,7 @@
 #' @export
 #' 
 #' @import greta
+#' @import greta.gp
 #' 
 #' @examples
 #' 
@@ -253,8 +254,8 @@ build_integrated_ipm <- function (classes, replicates, gp_tol) {
     # ipm transition kernel
     ipm_len <- greta::lognormal(mean = 0.0, sd = 1.0, dim = 1)
     ipm_sigma <- greta::lognormal(mean = 0.0, sd = 3.0, dim = 1)
-    ipm_kern <- gretaGP::rbf(lengthscales = ipm_len, variance = ipm_sigma)
-    ipm_mean <- greta::ilogit(gretaGP::gp(x = seq_len(classes),
+    ipm_kern <- greta.gp::rbf(lengthscales = ipm_len, variance = ipm_sigma)
+    ipm_mean <- greta::ilogit(greta.gp::gp(x = seq_len(classes),
                                           kernel = ipm_kern,
                                           tol = gp_tol))
     ipm_sigma_main <- greta::lognormal(mean = 0.0, sd = 3.0, dim = 1)
@@ -262,16 +263,16 @@ build_integrated_ipm <- function (classes, replicates, gp_tol) {
     # survival kernel
     surv_len <- greta::lognormal(mean = 0.0, sd = 1.0, dim = 1)
     surv_sigma <- greta::lognormal(mean = 0.0, sd = 3.0, dim = 1)
-    surv_kern <- gretaGP::rbf(lengthscales = surv_len, variance = surv_sigma)
-    ipm_surv <- greta::ilogit(gretaGP::gp(x = seq_len(classes),
+    surv_kern <- greta.gp::rbf(lengthscales = surv_len, variance = surv_sigma)
+    ipm_surv <- greta::ilogit(greta.gp::gp(x = seq_len(classes),
                                           kernel = surv_kern,
                                           tol = gp_tol))
     
     # fecundity kernel
     fec_len <- greta::lognormal(mean = 0.0, sd = 1.0, dim = 1)
     fec_sigma <- greta::lognormal(mean = 0.0, sd = 3.0, dim = 1)
-    fec_kern <- gretaGP::rbf(lengthscales = fec_len, variance = fec_sigma)
-    ipm_fec <- exp(gretaGP::gp(x = seq_len(classes),
+    fec_kern <- greta.gp::rbf(lengthscales = fec_len, variance = fec_sigma)
+    ipm_fec <- exp(greta.gp::gp(x = seq_len(classes),
                                kernel = fec_kern,
                                tol = gp_tol))
     
