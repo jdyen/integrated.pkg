@@ -46,17 +46,63 @@ define_integrated_data <- function (data,
   
   if (process_link == 'growth') {
     
-    # check if data are formatted correctly
-    if (ncol(data) != nrow(data)) {
-      data <- make_growth_data_matrix(data = data,
-                                      classes = integrated_process$classes)
+    # check if data are a list or just a single matrix
+    if (!is.list(data)) {
+      
+      if (!is.matrix(data) & !is.data.frame(data)) {
+        stop('growth data must be a matrix or list of matrices')
+      }
+      
+      # check if data are formatted correctly
+      if (ncol(data) != nrow(data)) {
+        data <- make_growth_data_matrix(data = data,
+                                        classes = integrated_process$classes)
+      }
+      
+      data <- list(data)
+      
+    } else {
+
+      if ((length(data) > 1) & (integrated_process$replicates > 1)) {      
+        if (length(data) != integrated_process$replicates) {
+          stop('growth data with more than one element should have one matrix for each replicate')
+        }
+      }
+      
     }
+    
+    # create data module from growth data matrix
     data_module <- define_growth_module(data = data,
                                         integrated_process = integrated_process, 
                                         observation_model = observation_model)
   }   
   
   if (process_link == 'abundance') {
+    
+    # check data format
+    if (!is.list(data)) {
+      if (is.matrix(data) | is.data.frame(data)) {
+        data <- list(data)
+      } else {
+        stop('abundance data must be a list with classes in rows and samples in columns')
+      }
+    }
+    
+    # if there is more than one replicate
+    if (integrated_process$replicates > 1) {
+      # check that there is one data element for each replicate
+      if (length(data) != integrated_process$replicates) {
+        stop('abundance data should be a list with one entry for each replicate in integrated_process')
+      }
+    }
+    
+    # this won't work if there are more classes in data than in the process model
+    if (max(sapply(data, nrow)) > integrated_process$classes) {
+      stop(paste0('there are ', max(sapply(data, nrow)), ' classes in the data set ',
+                  'but only ', integrated_process$classes, ' classes in integrated_process'))
+    }
+    
+    # create data module from list data
     data_module <- define_abundance_module(data = data,
                                            integrated_process = integrated_process, 
                                            observation_model = observation_model)
@@ -172,11 +218,11 @@ as.integrated_data <- function (model) {
 # internal function: build growth data module
 define_growth_module <- function (data, integrated_process, observation_model) {
   
-  size_data <- vector('list', length = integrated_process$replicates)
-  for (i in seq_len(integrated_process$replicates)) {
-    size_data[[i]] <- lapply(seq_len(ncol(data)),
-                             function(index) greta::as_data(matrix(data[, index],
-                                                                   ncol = integrated_process$classes)))
+  size_data <- vector('list', length = length(data))
+  for (i in seq_along(data)) {
+    size_data[[i]] <- lapply(seq_len(ncol(data[[i]])),
+                             function(index) greta::as_data(matrix(data[[i]][, index],
+                                                                   ncol = ncol(data[[i]]))))
   } 
   
   size_data
@@ -189,12 +235,27 @@ define_abundance_module <- function (data, integrated_process, observation_model
   # create output lists
   mu_iterated <- vector("list", length = integrated_process$replicates)
   
-  for (i in seq_len(integrated_process$replicates)) {
-    mu_iterated[[i]] <- iterate_state((integrated_process$parameters$survival[[i]] +
-                                         integrated_process$parameters$fecundity[[i]]),
-                                      integrated_process$mu_initial[[i]],
-                                      seq_len(ncol(data[[i]])))
-  } 
+  # use separate process models if they exist
+  if (integrated_process$replicates > 1) {
+    
+    for (i in seq_len(integrated_process$replicates)) {
+      mu_iterated[[i]] <- iterate_state((integrated_process$parameters$survival[[i]] +
+                                           integrated_process$parameters$fecundity[[i]]),
+                                        integrated_process$mu_initial[[i]],
+                                        seq_len(ncol(data[[i]])))
+      
+    } 
+  } else {
+    
+    # fit all elements of data to the same process model
+    for (i in seq_len(length(data))) {
+      mu_iterated[[i]] <- iterate_state((integrated_process$parameters$survival[[1]] +
+                                           integrated_process$parameters$fecundity[[1]]),
+                                        integrated_process$mu_initial[[1]],
+                                        seq_len(ncol(data[[i]])))
+    
+    } 
+  }
   
   mu_flattened <- do.call('c', mu_iterated)
   

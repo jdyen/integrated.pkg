@@ -26,11 +26,18 @@
 #' # prepare an example model
 #' data <- define_integrated_process(type = 'MPM')
 
-define_integrated_process <- function (type, classes, structure = 'stage', replicates = 1) {
+define_integrated_process <- function (type, classes,
+                                       structure = 'stage',
+                                       replicates = 1,
+                                       params = list()) {
   
   if (!(type %in% c('IPM', 'MPM'))) {
     stop('type must be one of IPM or MPM')
   }
+  
+  # fill params_list
+  params_list <- list(fec = 1000)
+  params_list[names(params)] <- params
   
   if (type == 'IPM') {
     
@@ -51,12 +58,12 @@ define_integrated_process <- function (type, classes, structure = 'stage', repli
   if (type == 'MPM') {
     
     # create transition matrix    
-    params <- get(structure)(classes = classes, replicates = replicates)
+    params <- get(structure)(classes = classes, replicates = replicates, params = params_list)
     parameters <- list(transitions = vector('list', length = replicates),
                        standard_deviations = params$standard_deviations)
     mu_initial <- lapply(seq_len(replicates),
                          function(x) greta::lognormal(meanlog = 0.0,
-                                                      sdlog = 2.0,
+                                                      sdlog = 4.0,
                                                       dim = classes))
     parameters$survival <- lapply(seq_len(replicates),
                                   function(i) array(params$survival[, , i],
@@ -134,7 +141,7 @@ as.integrated_process <- function (model) {
 }
 
 # internal function: create stage-structured matrix model with faster array setup
-stage <- function (classes, replicates) {
+stage <- function (classes, replicates, params) {
   
   # survival prior
   surv_max <- array(0.0001, dim = c(classes, classes, replicates))
@@ -158,7 +165,7 @@ stage <- function (classes, replicates) {
   
   # fecundity prior
   fec_max <- array(0.0001, dim = c(classes, classes, replicates))
-  fec_max[1, classes, ] <- rep(100, times = replicates)
+  fec_max[1, classes, ] <- rep(params$fec, times = replicates)
   fec_max <- greta::as_data(fec_max)
   fecundity <- fec_max * greta::uniform(min = 0, max = 1,
                                         dim = dim(fec_max)) 
@@ -172,7 +179,7 @@ stage <- function (classes, replicates) {
 }
 
 # internal function: create age-structured matrix model with faster array setup
-age <- function (classes, replicates) {
+age <- function (classes, replicates, params) {
   
   # survival prior
   surv_max <- array(0.0001, dim = c(classes, classes, replicates))
@@ -193,7 +200,7 @@ age <- function (classes, replicates) {
   
   # fecundity prior
   fec_max <- array(0.0001, dim = c(classes, classes, replicates))
-  fec_max[1, classes, ] <- rep(100, times = replicates)
+  fec_max[1, classes, ] <- rep(params$fec, times = replicates)
   fec_max <- greta::as_data(fec_max)
   fecundity <- fec_max * greta::uniform(min = 0, max = 1,
                                         dim = dim(fec_max)) 
@@ -207,7 +214,7 @@ age <- function (classes, replicates) {
 }
 
 # internal function: create unstructured matrix model with faster array setup
-unstructured <- function (classes, replicates) {
+unstructured <- function (classes, replicates, params) {
   
   # survival prior
   surv_max <- array(0.0001, dim = c(classes, classes, replicates))
@@ -222,7 +229,7 @@ unstructured <- function (classes, replicates) {
   
   # fecundity prior
   fec_max <- array(0.0001, dim = c(classes, classes, replicates))
-  fec_max[1, seq_len(classes)[-1], ] <- rep(100, times = (replicates * (classes - 1)))
+  fec_max[1, seq_len(classes)[-1], ] <- rep(params$fec, times = (replicates * (classes - 1)))
   fec_max <- greta::as_data(fec_max)
   fecundity <- fec_max * greta::uniform(min = 0, max = 1,
                                         dim = dim(fec_max)) 
