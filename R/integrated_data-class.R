@@ -72,9 +72,7 @@ define_integrated_data <- function (data,
         stop('one growth data set must be supplied for each replicate')
       }
     }
-    
-    }
-    
+
     # create data module from growth data matrix
     data_module <- define_growth_module(data = data,
                                         integrated_process = integrated_process, 
