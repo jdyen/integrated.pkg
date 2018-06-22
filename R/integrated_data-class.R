@@ -66,6 +66,11 @@ define_integrated_data <- function (data,
            call. = FALSE)
     }
     
+    # error if the number of data classes doesn't match the process
+    if (!all(integrated_process$classes == sapply(data, nrow))) {
+      stop('number of classes in growth data must match number of classes in integrated_process')
+    }
+    
     if (integrated_process$replicates > 1) {      
       if (length(data) > 1) {
         if (length(data) != integrated_process$replicates) {
@@ -113,7 +118,7 @@ define_integrated_data <- function (data,
     
     # this won't work if there are more classes in data than in the process model
     if (max(sapply(data, nrow)) > integrated_process$classes) {
-      stop(paste0('there are ', max(sapply(data, nrow)), ' classes in the data set ',
+      stop(paste0('there are up to ', max(sapply(data, nrow)), ' classes in the data set ',
                   'but only ', integrated_process$classes, ' classes in integrated_process'),
            call. = FALSE)
     }
@@ -249,7 +254,7 @@ define_growth_module <- function (data, integrated_process, observation_model) {
 define_abundance_module <- function (data, integrated_process, observation_model) {
   
   # create output lists
-  mu_iterated <- vector("list", length = integrated_process$replicates)
+  mu_iterated <- vector("list", length = length(data))
   
   # use separate process models if they exist
   if (integrated_process$replicates > 1) {

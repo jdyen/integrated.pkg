@@ -42,11 +42,45 @@ build_integrated_model <- function (integrated_process, ...) {
     
     if (data_tmp$process_link == 'abundance') {
       
+      # it's easy if data and process contain the same number of stages
+      if (all(integrated_process$classes == sapply(data_tmp$data, nrow))) {
+        
       # flatten the data set into a vector
       data <- do.call('c', data_tmp$data)
 
       # poisson likelihood for observed abundances      
       greta::distribution(data) <- greta::poisson(data_tmp$data_module)
+      
+      } else {
+        
+        # we need to be more careful because data are binned more
+        #  coarsely than the integrated process
+        for (i in seq_along(data_tmp$data)) {
+          
+          # we want to keep the existing greta_arrays for each element
+          #   where the process and daata have the same number of stages
+          index <- NULL
+          if (nrow(data_tmp$data[[i]]) == integrated_process$classes) {
+            index <- c(index, seq_len(length(data_tmp$data[[i]])))
+          } else {
+            index <- c(index,
+                       floor(seq(max(index) + 1,
+                               max(index) + 1 + nrow(data_tmp$data[[i]]) * ncol(data_tmp$data[[i]]),
+                               length = integrated_process$classes * ncol(data_tmp$data[[i]]))))
+          }
+          
+          # flatten the data into a vector
+          data <- do.call('c', data_tmp$data)
+          
+          # collapse the process abundances into fewer classes
+          collapsed_data_module <- tapply(data_tmp$data_module, index, sum)
+          
+          # poisson likelihood for observed abundances      
+          greta::distribution(data) <- greta::poisson(collapsed_data_module)
+          
+        }
+        
+      }
       
     }
     
