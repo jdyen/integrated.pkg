@@ -166,7 +166,8 @@ stage <- function (classes, replicates, params) {
                                         dim = dim(surv_max))
   
   # fecundity prior
-  fec_min <- array(params$fec_lower, dim = c(classes, classes, replicates))
+  fec_min <- array(0.0, dim = c(classes, classes, replicates))
+  fec_min[1, classes, ] <- rep(params$fec_lower, times = replicates)
   fec_max <- array(0.0001, dim = c(classes, classes, replicates))
   fec_max[1, classes, ] <- rep(params$fec_upper, times = replicates)
   fec_max <- greta::as_data(fec_max)
@@ -202,7 +203,8 @@ age <- function (classes, replicates, params) {
                                          dim = dim(surv_max))
   
   # fecundity prior
-  fec_min <- array(params$fec_lower, dim = c(classes, classes, replicates))
+  fec_min <- array(0.0, dim = c(classes, classes, replicates))
+  fec_min[1, classes, ] <- rep(params$fec_lower, times = replicates)
   fec_max <- array(0.0001, dim = c(classes, classes, replicates))
   fec_max[1, classes, ] <- rep(params$fec_upper, times = replicates)
   fec_max <- greta::as_data(fec_max)
@@ -232,7 +234,8 @@ unstructured <- function (classes, replicates, params) {
                                         dim = dim(surv_max))
   
   # fecundity prior
-  fec_min <- array(params$fec_lower, dim = c(classes, classes, replicates))
+  fec_min <- array(0.0, dim = c(classes, classes, replicates))
+  fec_min[1, seq_len(classes)[-1], ] <- rep(params$fec_lower, times = replicates)
   fec_max <- array(0.0001, dim = c(classes, classes, replicates))
   fec_max[1, seq_len(classes)[-1], ] <- rep(params$fec_upper, times = (replicates * (classes - 1)))
   fec_max <- greta::as_data(fec_max)
