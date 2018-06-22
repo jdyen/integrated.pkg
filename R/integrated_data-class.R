@@ -47,11 +47,7 @@ define_integrated_data <- function (data,
   if (process_link == 'growth') {
     
     # check if data are a list or just a single matrix
-    if (!is.list(data)) {
-      
-      if (!is.matrix(data) & !is.data.frame(data)) {
-        stop('growth data must be a matrix or list of matrices')
-      }
+    if (is.matrix(data) | is.data.frame(data)) {
       
       # check if data are formatted correctly
       if (ncol(data) != nrow(data)) {
@@ -63,10 +59,14 @@ define_integrated_data <- function (data,
       
     } else {
 
+      if (is.list(data)) {
       if ((length(data) > 1) & (integrated_process$replicates > 1)) {      
         if (length(data) != integrated_process$replicates) {
           stop('growth data with more than one element should have one matrix for each replicate')
         }
+      }
+      } else {
+        stop('growth data must be a matrix, data.frame, or list of matrices or data.frames')
       }
       
     }
