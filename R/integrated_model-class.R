@@ -70,16 +70,16 @@ build_integrated_model <- function (integrated_process, ...) {
                                  length = integrated_process$classes * ncol(data_tmp$data[[i]]))))
           }
           
-          # flatten the data into a vector
-          data <- do.call('c', data_tmp$data)
-          
-          # collapse the process abundances into fewer classes
-          collapsed_data_module <- tapply(data_tmp$data_module, index, sum)
-          
-          # poisson likelihood for observed abundances      
-          greta::distribution(data) <- greta::poisson(collapsed_data_module)
-          
         }
+        
+        # flatten the data into a vector
+        data <- do.call('c', data_tmp$data)
+        
+        # collapse the process abundances into fewer classes
+        collapsed_data_module <- tapply(data_tmp$data_module, index, 'sum')
+        
+        # poisson likelihood for observed abundances      
+        greta::distribution(data) <- greta::poisson(collapsed_data_module)
         
       }
       
