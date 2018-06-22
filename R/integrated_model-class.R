@@ -59,7 +59,8 @@ build_integrated_model <- function (integrated_process, ...) {
     
   } 
   
-  do.call('c', integrated_process$parameters$transitions)
+  c(do.call('c', integrated_process$parameters$survival),
+    do.call('c', integrated_process$parameters$fecundity))
   
 }
 
