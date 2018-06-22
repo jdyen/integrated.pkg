@@ -41,12 +41,13 @@ define_integrated_data <- function (data,
   if (!(process_link %in% c('growth', 'abundance',
                             'mark_recapture', 'size_abundance',
                             'biomass', 'community'))) {
-    stop('process_link must be a known process module')
+    stop('process_link must be a known process module',
+         call. = FALSE)
   }  
   
   if (process_link == 'growth') {
     
-    # check if data are a list or just a single matrix
+    # convert matrix or data.frame data to a list
     if (is.matrix(data) | is.data.frame(data)) {
       
       # check if data are formatted correctly
@@ -59,17 +60,24 @@ define_integrated_data <- function (data,
       
     }
     
+    # data should be a list or matrix
     if (!is.list(data)) {
-      stop('growth data must be a matrix, data.frame, or list of matrices or data.frames')
+      stop('growth data must be a matrix, data.frame, or list of matrices or data.frames',
+           call. = FALSE)
     }
     
     if (integrated_process$replicates > 1) {      
       if (length(data) > 1) {
         if (length(data) != integrated_process$replicates) {
-          stop('growth data with more than one element should have one matrix for each replicate')
+          stop(paste0('growth data have ', length(data), ' elements but ',
+                      ' integrated process has ', integrated_process$replicates,
+                      ' replicates'),
+               call. = FALSE)
         }
       } else {
-        stop('one growth data set must be supplied for each replicate')
+        stop(paste0('one growth data set should be supplied for each of the ',
+                    integrated_process$replicates, ' process replicates'),
+             call. = FALSE)
       }
     }
 
@@ -82,26 +90,32 @@ define_integrated_data <- function (data,
   if (process_link == 'abundance') {
     
     # check data format
+    if (is.matrix(data) | is.data.frame(data)) {
+      data <- list(data)
+    }
+    
+    # error if not a list or matrix
     if (!is.list(data)) {
-      if (is.matrix(data) | is.data.frame(data)) {
-        data <- list(data)
-      } else {
-        stop('abundance data must be a list with classes in rows and samples in columns')
-      }
+      stop('abundance data must be a list with classes in rows and samples in columns',
+           call. = FALSE) 
     }
     
     # if there is more than one replicate
     if (integrated_process$replicates > 1) {
       # check that there is one data element for each replicate
       if (length(data) != integrated_process$replicates) {
-        stop('abundance data should be a list with one entry for each replicate in integrated_process')
+        stop(paste0('abundance data have ', length(data), ' elements but ',
+                    ' integrated_process contains ', integrated_process$replicates,
+                    ' replicates'),
+             call. = FALSE)
       }
     }
     
     # this won't work if there are more classes in data than in the process model
     if (max(sapply(data, nrow)) > integrated_process$classes) {
       stop(paste0('there are ', max(sapply(data, nrow)), ' classes in the data set ',
-                  'but only ', integrated_process$classes, ' classes in integrated_process'))
+                  'but only ', integrated_process$classes, ' classes in integrated_process'),
+           call. = FALSE)
     }
     
     # create data module from list data

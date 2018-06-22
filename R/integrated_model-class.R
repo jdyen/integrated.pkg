@@ -36,7 +36,8 @@ build_integrated_model <- function (integrated_process, ...) {
     data_tmp <- data_modules[[i]]
     
     if (!(data_tmp$process_link %in% c('abundance', 'growth'))) {
-      stop('only abundance and growth modules are currently implemented')
+      stop('only abundance and growth modules are currently implemented',
+           call. = FALSE)
     }
     
     if (data_tmp$process_link == 'abundance') {

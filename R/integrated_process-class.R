@@ -32,7 +32,8 @@ define_integrated_process <- function (type, classes,
                                        params = list()) {
   
   if (!(type %in% c('IPM', 'MPM'))) {
-    stop('type must be one of IPM or MPM')
+    stop('type must be one of IPM or MPM',
+         call. = FALSE)
   }
   
   # fill params_list
