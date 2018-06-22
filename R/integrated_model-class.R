@@ -66,7 +66,7 @@ build_integrated_model <- function (integrated_process, ...) {
           } else {
             index <- c(index,
                        floor(seq(index_max + 1,
-                                 index_max + 1 + nrow(data_tmp$data[[i]]) * ncol(data_tmp$data[[i]]),
+                                 index_max + nrow(data_tmp$data[[i]]) * ncol(data_tmp$data[[i]]),
                                  length = integrated_process$classes * ncol(data_tmp$data[[i]]))))
           }
           
