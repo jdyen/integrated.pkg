@@ -61,9 +61,15 @@ define_integrated_process <- function (type, classes, structure = 'stage', repli
                          function(x) greta::lognormal(meanlog = 0.0,
                                                       sdlog = 2.0,
                                                       dim = classes))
-    parameters$transitions <- lapply(seq_len(replicates),
-                                     function(i) array(do.call('c', lapply(params$transitions, function(x) x[i])),
-                                                       dim = c(classes, classes)))
+    if (structure != 'stage_array') {
+      parameters$transitions <- lapply(seq_len(replicates),
+                                       function(i) array(do.call('c', lapply(params$transitions, function(x) x[i])),
+                                                         dim = c(classes, classes)))
+    } else {
+      parameters$transitions <- lapply(seq_len(replicates),
+                                       function(i) array(params$transitions[, , i],
+                                                         dim = c(classes, classes)))
+    }
   }
   
   integrated_process <- list(parameters = parameters,
@@ -167,6 +173,39 @@ stage <- function (classes, replicates) {
   # collate outputs
   params <- list(transitions = transitions,
                  standard_deviations = demo_sd)
+  
+  params
+  
+}
+
+# internal function: create stage-structured matrix model with faster array setup
+stage_array <- function (classes, replicates) {
+  
+  array_min <- array(0, dim = c(classes, classes, replicates))
+  array_max <- array(0.001, dim = c(classes, classes, replicates))
+  
+  for (i in seq_len(classes)) {
+    
+    array_max[1, classes, ] <- rep(100, times = replicates)
+    array_max[i, i, ] <- rep(1, times = replicates)
+    if (i < classes) {
+      array_max[i + 1, i, ] <- rep(1, times = replicates)
+      if (i < (classes - 1)) {
+        array_max[i + 2, i, ] <- rep(1, times = replicates)
+      }
+    }
+    
+  }
+  
+  # fecundity and survival priors
+  transitions <- greta::uniform(min = 0,
+                                max = 1,
+                                dim = dim(array_min))
+  transitions <- transitions * array_max
+  
+  # collate outputs
+  params <- list(transitions = transitions,
+                 standard_deviations = NULL)
   
   params
   
