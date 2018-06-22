@@ -50,9 +50,6 @@ define_integrated_process <- function (type, classes, structure = 'stage', repli
   
   if (type == 'MPM') {
     
-    # set density dependence prior
-    density_parameter <- greta::uniform(min = 0.8, max = 1.2, dim = 1)
-
     # create transition matrix    
     params <- get(structure)(classes = classes, replicates = replicates)
     parameters <- list(transitions = vector('list', length = replicates),
@@ -61,15 +58,12 @@ define_integrated_process <- function (type, classes, structure = 'stage', repli
                          function(x) greta::lognormal(meanlog = 0.0,
                                                       sdlog = 2.0,
                                                       dim = classes))
-    if (!length(grep('array', structure))) {
-      parameters$transitions <- lapply(seq_len(replicates),
-                                       function(i) array(do.call('c', lapply(params$transitions, function(x) x[i])),
-                                                         dim = c(classes, classes)))
-    } else {
-      parameters$transitions <- lapply(seq_len(replicates),
-                                       function(i) array(params$transitions[, , i],
-                                                         dim = c(classes, classes)))
-    }
+    parameters$survival <- lapply(seq_len(replicates),
+                                  function(i) array(params$survival[, , i],
+                                                    dim = c(classes, classes)))
+    parameters$fecundity <- lapply(seq_len(replicates),
+                                  function(i) array(params$fecundity[, , i],
+                                                    dim = c(classes, classes)))
   }
   
   integrated_process <- list(parameters = parameters,
@@ -139,200 +133,103 @@ as.integrated_process <- function (model) {
   as_class(model, name = 'integrated_process', type = 'list')
 }
 
-# internal function: create stage-structured matrix model
+# internal function: create stage-structured matrix model with faster array setup
 stage <- function (classes, replicates) {
   
-  # hyperpriors for sds
-  demo_sd <- greta::lognormal(mean = 0.0, sd = 1.0, dim = 2)
-  
-  # fecundity and survival priors
-  transitions <- vector("list", length = (classes * classes))
-  transitions[[1]] <- greta::ilogit(greta::normal(mean = 0.0,
-                                                  sd = demo_sd[1],
-                                                  dim = replicates))
-  for (i in 2:(classes - 1)) {
-    transitions[[i]] <- greta::uniform(min = 0.0, max = 0.0001, dim = replicates)
-  }  
-  transitions[[classes]] <- greta::lognormal(mean = 0.0,
-                                             sd = demo_sd[2],
-                                             dim = replicates)   
-  for (i in seq_len(classes)[-1]) {
-    for (j in seq_len(classes)) {
-      if ((j == (i - 1)) | (j == (i - 2)) | (j == i)) {
-        transitions[[((i - 1) * classes) + j]] <- greta::ilogit(greta::normal(mean = 0.0,
-                                                                              sd = demo_sd[1],
-                                                                              dim = replicates))
-      } else {   
-        transitions[[((i - 1) * classes) + j]] <- greta::uniform(min = 0.0,
-                                                                 max = 0.0001,
-                                                                 dim = replicates)
-      }
-    } 
-  }  
-  
-  # collate outputs
-  params <- list(transitions = transitions,
-                 standard_deviations = demo_sd)
-  
-  params
-  
-}
-
-# internal function: create stage-structured matrix model with faster array setup
-stage_array <- function (classes, replicates) {
-  
-  array_min <- array(0, dim = c(classes, classes, replicates))
-  array_max <- array(0.001, dim = c(classes, classes, replicates))
-  
-  for (i in seq_len(classes)) {
+  # survival prior
+  surv_max <- array(0.0001, dim = c(classes, classes, replicates))
+  for (i in seq_len(replicates)) {
     
-    array_max[1, classes, ] <- rep(100, times = replicates)
-    array_max[i, i, ] <- rep(1, times = replicates)
-    if (i < classes) {
-      array_max[i + 1, i, ] <- rep(1, times = replicates)
-      if (i < (classes - 1)) {
-        array_max[i + 2, i, ] <- rep(1, times = replicates)
-      }
-    }
+    diag(surv_max[, , i]) <- 1
     
-  }
-  
-  array_max <- greta::as_data(array_max)
-  
-  # fecundity and survival priors
-  transitions <- array_max * greta::uniform(min = 0,
-                                            max = 1,
-                                            dim = dim(array_min))
-
-  # collate outputs
-  params <- list(transitions = transitions,
-                 standard_deviations = NULL)
-  
-  params
-  
-}
-
-# internal function: create age-structured matrix model
-age <- function (classes, replicates) {
-  
-  # hyperpriors for sds
-  demo_sd <- greta::lognormal(mean = 0.0, sd = 3.0, dim = 2)
-  
-  # fecundity and survival priors
-  transitions <- vector("list", length = (classes * classes))
-  for (i in 1:(classes - 1)) {
-    transitions[[i]] <- greta::uniform(min = 0.0, max = 0.0001, dim = replicates)
-  }
-  transitions[[classes]] <- greta::lognormal(mean = 0.0,
-                                             sd = demo_sd[1],
-                                             dim = replicates)
-  for (i in seq_len(classes)[-1]) {
     for (j in seq_len(classes)) {
-      if (j == (i - 1)) {
-        transitions[[((i - 1) * classes) + j]] <- greta::ilogit(greta::normal(mean = 0.0,
-                                                                              sd = demo_sd[2],
-                                                                              dim = replicates))
-      } else {
-        if ((i == classes) & (j == classes)) {
-          transitions[[((i - 1) * classes) + j]] <- greta::ilogit(greta::normal(mean = 0.0,
-                                                                                sd = demo_sd[2],
-                                                                                dim = replicates))
-        } else { 
-          transitions[[((i - 1) * classes) + j]] <- greta::uniform(min = 0.0,
-                                                                   max = 0.0001,
-                                                                   dim = replicates)
+      if (j < classes) {
+        surv_max[j + 1, j, i] <- 1
+        if (j < (classes - 1)) {
+          surv_max[j + 2, j, i] <- 1
         }
-      } 
+      }
     }
-  }
+    
+  } 
+  surv_max <- greta::as_data(surv_max)
+  survival <- surv_max * greta::uniform(min = 0, max = 1,
+                                        dim = dim(surv_max))
   
+  # fecundity prior
+  fec_max <- array(0.0001, dim = c(classes, classes, replicates))
+  fec_max[1, classes, ] <- rep(100, times = replicates)
+  fec_max <- greta::as_data(fec_max)
+  fecundity <- fec_max * greta::uniform(min = 0, max = 1,
+                                        dim = dim(fec_max)) 
+
   # collate outputs
-  params <- list(transitions = transitions,
-                 standard_deviations = demo_sd)
+  params <- list(survival = survival,
+                 fecundity = fecundity)
   
   params
   
 }
 
 # internal function: create age-structured matrix model with faster array setup
-age_array <- function (classes, replicates) {
+age <- function (classes, replicates) {
   
-  array_min <- array(0, dim = c(classes, classes, replicates))
-  array_max <- array(0.001, dim = c(classes, classes, replicates))
-  
-  for (i in seq_len(classes)) {
+  # survival prior
+  surv_max <- array(0.0001, dim = c(classes, classes, replicates))
+  for (i in seq_len(replicates)) {
     
-    array_max[1, classes, ] <- rep(100, times = replicates)
-    array_max[i, i, ] <- rep(1, times = replicates)
-    if (i < classes) {
-      array_max[i + 1, i, ] <- rep(1, times = replicates)
+    diag(surv_max[, , i]) <- 1
+    
+    for (j in seq_len(classes)) {
+      if (j < classes) {
+        surv_max[j + 1, j, i] <- 1
+      }
     }
-    
-  }
-  
-  array_max <- greta::as_data(array_max)
-  
-  # fecundity and survival priors
-  transitions <- array_max * greta::uniform(min = 0,
-                                            max = 1,
-                                            dim = dim(array_min))
-  
-  # collate outputs
-  params <- list(transitions = transitions,
-                 standard_deviations = NULL)
-  
-  params
-  
-}
 
-# internal function: create unstructured matrix model
-unstructured <- function (classes, replicates) {
+  } 
+  surv_max <- greta::as_data(surv_max)
+  survival <- surv_max * greta::uniform(min = 0, max = 1,
+                                         dim = dim(surv_max))
   
-  # hyperpriors for sds
-  demo_sd <- greta::lognormal(mean = 0.0, sd = 3.0, dim = 2)
-  
-  # fecundity and survival priors
-  transitions <- vector('list', length = (classes * classes))
-  transitions[[1]] <- greta::ilogit(greta::normal(mean = 0.0,
-                                                  sd = demo_sd[1],
-                                                  dim = replicates))
-  for (i in seq_len(classes)[-1]) {
-    transitions[[i]] <- greta::lognormal(mean = 0.0,
-                                         sd = demo_sd[2],
-                                         dim = replicates)
-  }
-  for (i in (classes + 1):length(transitions)) {
-    transitions[[i]] <- greta::ilogit(greta::normal(mean = 0.0,
-                                                    sd = demo_sd[2],
-                                                    dim = replicates))
-  }  
+  # fecundity prior
+  fec_max <- array(0.0001, dim = c(classes, classes, replicates))
+  fec_max[1, classes, ] <- rep(100, times = replicates)
+  fec_max <- greta::as_data(fec_max)
+  fecundity <- fec_max * greta::uniform(min = 0, max = 1,
+                                        dim = dim(fec_max)) 
   
   # collate outputs
-  params <- list(transitions = transitions,
-                 standard_deviations = demo_sd) 
+  params <- list(survival = survival,
+                 fecundity = fecundity)
   
   params
   
 }
 
 # internal function: create unstructured matrix model with faster array setup
-unstructured_array <- function (classes, replicates) {
+unstructured <- function (classes, replicates) {
   
-  array_min <- array(0, dim = c(classes, classes, replicates))
-  array_max <- array(1, dim = c(classes, classes, replicates))
+  # survival prior
+  surv_max <- array(0.0001, dim = c(classes, classes, replicates))
+  for (i in seq_len(replicates)) {
+    diag(surv_max[, , i]) <- 1
+    surv_max[, , i][lower.tri(surv_max[, , i])] <- 1
+    
+  } 
+  surv_max <- greta::as_data(surv_max)
+  survival <- surv_max * greta::uniform(min = 0, max = 1,
+                                        dim = dim(surv_max))
   
-  array_max[1, seq_len(classes)[-1], ] <- rep(100, times = (replicates * (classes - 1)))
-
-  array_max <- greta::as_data(array_max)
-  
-  # fecundity and survival priors
-  transitions <- array_max * greta::uniform(min = 0,
-                                            max = 1,
-                                            dim = dim(array_min))
+  # fecundity prior
+  fec_max <- array(0.0001, dim = c(classes, classes, replicates))
+  fec_max[1, seq_len(classes)[-1], ] <- rep(100, times = (replicates * (classes - 1)))
+  fec_max <- greta::as_data(fec_max)
+  fecundity <- fec_max * greta::uniform(min = 0, max = 1,
+                                        dim = dim(fec_max)) 
   
   # collate outputs
-  params <- list(transitions = transitions,
-                 standard_deviations = NULL)
+  params <- list(survival = survival,
+                 fecundity = fecundity)
   
   params
   
