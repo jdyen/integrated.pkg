@@ -55,18 +55,19 @@ build_integrated_model <- function (integrated_process, ...) {
         
         # we need to be more careful because data are binned more
         #  coarsely than the integrated process
+        index <- NULL
         for (i in seq_along(data_tmp$data)) {
           
           # we want to keep the existing greta_arrays for each element
           #   where the process and daata have the same number of stages
-          index <- NULL
+          index_max <- ifelse(i == 1, 0, max(index))
           if (nrow(data_tmp$data[[i]]) == integrated_process$classes) {
             index <- c(index, seq_len(length(data_tmp$data[[i]])))
           } else {
             index <- c(index,
-                       floor(seq(max(index) + 1,
-                               max(index) + 1 + nrow(data_tmp$data[[i]]) * ncol(data_tmp$data[[i]]),
-                               length = integrated_process$classes * ncol(data_tmp$data[[i]]))))
+                       floor(seq(index_max + 1,
+                                 index_max + 1 + nrow(data_tmp$data[[i]]) * ncol(data_tmp$data[[i]]),
+                                 length = integrated_process$classes * ncol(data_tmp$data[[i]]))))
           }
           
           # flatten the data into a vector
