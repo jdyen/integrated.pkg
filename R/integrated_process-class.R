@@ -37,7 +37,8 @@ define_integrated_process <- function (type, classes,
   }
   
   # fill params_list
-  params_list <- list(fec = 1000)
+  params_list <- list(fec_lower = 0,
+                      fec_upper = 1000)
   params_list[names(params)] <- params
   
   if (type == 'IPM') {
@@ -165,12 +166,13 @@ stage <- function (classes, replicates, params) {
                                         dim = dim(surv_max))
   
   # fecundity prior
+  fec_min <- array(params$fec_lower, dim = c(classes, classes, replicates))
   fec_max <- array(0.0001, dim = c(classes, classes, replicates))
-  fec_max[1, classes, ] <- rep(params$fec, times = replicates)
+  fec_max[1, classes, ] <- rep(params$fec_upper, times = replicates)
   fec_max <- greta::as_data(fec_max)
-  fecundity <- fec_max * greta::uniform(min = 0, max = 1,
-                                        dim = dim(fec_max)) 
-
+  fecundity <- fec_min + (fec_max - fec_min) * greta::uniform(min = 0, max = 1,
+                                                              dim = dim(fec_max)) 
+  
   # collate outputs
   params <- list(survival = survival,
                  fecundity = fecundity)
@@ -200,11 +202,12 @@ age <- function (classes, replicates, params) {
                                          dim = dim(surv_max))
   
   # fecundity prior
+  fec_min <- array(params$fec_lower, dim = c(classes, classes, replicates))
   fec_max <- array(0.0001, dim = c(classes, classes, replicates))
-  fec_max[1, classes, ] <- rep(params$fec, times = replicates)
+  fec_max[1, classes, ] <- rep(params$fec_upper, times = replicates)
   fec_max <- greta::as_data(fec_max)
-  fecundity <- fec_max * greta::uniform(min = 0, max = 1,
-                                        dim = dim(fec_max)) 
+  fecundity <- fec_min + (fec_max - fec_min) * greta::uniform(min = 0, max = 1,
+                                                              dim = dim(fec_max)) 
   
   # collate outputs
   params <- list(survival = survival,
@@ -229,11 +232,12 @@ unstructured <- function (classes, replicates, params) {
                                         dim = dim(surv_max))
   
   # fecundity prior
+  fec_min <- array(params$fec_lower, dim = c(classes, classes, replicates))
   fec_max <- array(0.0001, dim = c(classes, classes, replicates))
-  fec_max[1, seq_len(classes)[-1], ] <- rep(params$fec, times = (replicates * (classes - 1)))
+  fec_max[1, seq_len(classes)[-1], ] <- rep(params$fec_upper, times = (replicates * (classes - 1)))
   fec_max <- greta::as_data(fec_max)
-  fecundity <- fec_max * greta::uniform(min = 0, max = 1,
-                                        dim = dim(fec_max)) 
+  fecundity <- fec_min + (fec_max - fec_min) * greta::uniform(min = 0, max = 1,
+                                                              dim = dim(fec_max)) 
   
   # collate outputs
   params <- list(survival = survival,
