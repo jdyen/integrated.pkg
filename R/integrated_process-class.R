@@ -197,6 +197,8 @@ stage_array <- function (classes, replicates) {
     
   }
   
+  array_max <- greta::as_data(array_max)
+  
   # fecundity and survival priors
   transitions <- array_max * greta::uniform(min = 0,
                                             max = 1,
@@ -268,6 +270,8 @@ age_array <- function (classes, replicates) {
     
   }
   
+  array_max <- greta::as_data(array_max)
+  
   # fecundity and survival priors
   transitions <- array_max * greta::uniform(min = 0,
                                             max = 1,
@@ -319,6 +323,8 @@ unstructured_array <- function (classes, replicates) {
   
   array_max[1, seq_len(classes)[-1], ] <- rep(100, times = (replicates * (classes - 1)))
 
+  array_max <- greta::as_data(array_max)
+  
   # fecundity and survival priors
   transitions <- array_max * greta::uniform(min = 0,
                                             max = 1,
