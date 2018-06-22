@@ -198,11 +198,10 @@ stage_array <- function (classes, replicates) {
   }
   
   # fecundity and survival priors
-  transitions <- greta::uniform(min = 0,
-                                max = 1,
-                                dim = dim(array_min))
-  transitions <- transitions * array_max
-  
+  transitions <- array_max * greta::uniform(min = 0,
+                                            max = 1,
+                                            dim = dim(array_min))
+
   # collate outputs
   params <- list(transitions = transitions,
                  standard_deviations = NULL)
