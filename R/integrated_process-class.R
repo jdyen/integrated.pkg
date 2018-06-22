@@ -61,7 +61,7 @@ define_integrated_process <- function (type, classes, structure = 'stage', repli
                          function(x) greta::lognormal(meanlog = 0.0,
                                                       sdlog = 2.0,
                                                       dim = classes))
-    if (structure != 'stage_array') {
+    if (!length(grep('array', structure))) {
       parameters$transitions <- lapply(seq_len(replicates),
                                        function(i) array(do.call('c', lapply(params$transitions, function(x) x[i])),
                                                          dim = c(classes, classes)))
@@ -252,6 +252,35 @@ age <- function (classes, replicates) {
   
 }
 
+# internal function: create age-structured matrix model with faster array setup
+age_array <- function (classes, replicates) {
+  
+  array_min <- array(0, dim = c(classes, classes, replicates))
+  array_max <- array(0.001, dim = c(classes, classes, replicates))
+  
+  for (i in seq_len(classes)) {
+    
+    array_max[1, classes, ] <- rep(100, times = replicates)
+    array_max[i, i, ] <- rep(1, times = replicates)
+    if (i < classes) {
+      array_max[i + 1, i, ] <- rep(1, times = replicates)
+    }
+    
+  }
+  
+  # fecundity and survival priors
+  transitions <- array_max * greta::uniform(min = 0,
+                                            max = 1,
+                                            dim = dim(array_min))
+  
+  # collate outputs
+  params <- list(transitions = transitions,
+                 standard_deviations = NULL)
+  
+  params
+  
+}
+
 # internal function: create unstructured matrix model
 unstructured <- function (classes, replicates) {
   
@@ -277,6 +306,27 @@ unstructured <- function (classes, replicates) {
   # collate outputs
   params <- list(transitions = transitions,
                  standard_deviations = demo_sd) 
+  
+  params
+  
+}
+
+# internal function: create unstructured matrix model with faster array setup
+unstructured_array <- function (classes, replicates) {
+  
+  array_min <- array(0, dim = c(classes, classes, replicates))
+  array_max <- array(1, dim = c(classes, classes, replicates))
+  
+  array_max[1, seq_len(classes)[-1], ] <- rep(100, times = (replicates * (classes - 1)))
+
+  # fecundity and survival priors
+  transitions <- array_max * greta::uniform(min = 0,
+                                            max = 1,
+                                            dim = dim(array_min))
+  
+  # collate outputs
+  params <- list(transitions = transitions,
+                 standard_deviations = NULL)
   
   params
   
