@@ -57,18 +57,22 @@ define_integrated_data <- function (data,
       
       data <- list(data)
       
-    } else {
-
-      if (is.list(data)) {
-      if ((length(data) > 1) & (integrated_process$replicates > 1)) {      
+    }
+    
+    if (!is.list(data)) {
+      stop('growth data must be a matrix, data.frame, or list of matrices or data.frames')
+    }
+    
+    if (integrated_process$replicates > 1) {      
+      if (length(data) > 1) {
         if (length(data) != integrated_process$replicates) {
           stop('growth data with more than one element should have one matrix for each replicate')
         }
-      }
       } else {
-        stop('growth data must be a matrix, data.frame, or list of matrices or data.frames')
+        stop('one growth data set must be supplied for each replicate')
       }
-      
+    }
+    
     }
     
     # create data module from growth data matrix

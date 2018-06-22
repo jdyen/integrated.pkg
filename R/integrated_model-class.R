@@ -66,29 +66,12 @@ build_integrated_model <- function (integrated_process, ...) {
           
         } else {
           
-          # if there is only one observed data set but multiple process matrices
-          if (length(data_tmp$data_module) == 1) {
-            
-            for (k in seq_len(integrated_process$replicates)) {
-              
-              for (j in seq_along(data_tmp$data_module[[i]])) {
-                greta::distribution(data_tmp$data_module[[i]][[j]]) <-
-                  greta::multinomial(size = sum(data_tmp$data_module[[i]][[j]]),
-                                     prob = t(integrated_process$parameters$survival[[k]][j, ]),
-                                     dim = 1)
-              }
-              
-            }
-            
-          } else {
-            
-            # there must be one process matrix for each data element
-            for (j in seq_along(data_tmp$data_module[[i]])) {
-              greta::distribution(data_tmp$data_module[[i]][[j]]) <-
-                greta::multinomial(size = sum(data_tmp$data_module[[i]][[j]]),
-                                   prob = t(integrated_process$parameters$survival[[i]][j, ]),
-                                   dim = 1)
-            }
+          # otherwise there must be one process matrix for each data element
+          for (j in seq_along(data_tmp$data_module[[i]])) {
+            greta::distribution(data_tmp$data_module[[i]][[j]]) <-
+              greta::multinomial(size = sum(data_tmp$data_module[[i]][[j]]),
+                                 prob = t(integrated_process$parameters$survival[[i]][j, ]),
+                                 dim = 1)
             
           }
           
