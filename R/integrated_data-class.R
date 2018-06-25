@@ -36,7 +36,8 @@
 define_integrated_data <- function (data,
                                     integrated_process, 
                                     process_link,
-                                    observation_model = 'naive') {
+                                    observation_model = 'naive',
+                                    settings = list()) {
   
   if (!(process_link %in% c('growth', 'abundance',
                             'mark_recapture', 'size_abundance',
@@ -53,7 +54,8 @@ define_integrated_data <- function (data,
       # check if data are formatted correctly
       if (ncol(data) != nrow(data)) {
         data <- make_growth_data_matrix(data = data,
-                                        classes = integrated_process$classes)
+                                        classes = integrated_process$classes,
+                                        settings = settings)
       }
       
       data <- list(data)
@@ -96,12 +98,30 @@ define_integrated_data <- function (data,
     
     # check data format
     if (is.matrix(data) | is.data.frame(data)) {
-      data <- list(data)
+      
+      # want the data to be a matrix with a size column or a matrix with classes in rows and samples in columns
+      if (!('size' %in% colnames(data))) {
+        
+        data <- list(data)
+        
+      } else {
+        
+        if (!all(c('size', 'time', 'site') %in% colnames(pop_data))) {
+          stop('data with a size column must also have site and time columns',
+               call. = FALSE)
+        }
+        
+        # need to collapse data into appopriate size classes
+        data <- make_pop_data_matrix(data = data,
+                                     classes = integrated_process$classes,
+                                     settings = settings)
+        
+      }
     }
     
     # error if not a list or matrix
     if (!is.list(data)) {
-      stop('abundance data must be a list with classes in rows and samples in columns',
+      stop('abundance data must contain a size column or be a list with classes in rows and samples in columns',
            call. = FALSE) 
     }
     
@@ -156,7 +176,8 @@ define_integrated_data <- function (data,
   data_module <- list(data_module = data_module,
                       data = data,
                       process_link = process_link,
-                      observation_model = observation_model)
+                      observation_model = observation_model,
+                      settings = settings)
   
   as.integrated_data(data_module)
   
@@ -327,9 +348,12 @@ define_community_module <- function (data, integrated_process, observation_model
 }
 
 # internal function: convert growth data in long format to matrix used by multinomial
-make_growth_data_matrix <- function(data, classes) {
+make_growth_data_matrix <- function(data, classes, settings) {
   
-  nbreaks <- classes + 1
+  # unpack settings
+  matrix_set <- list(nbreaks = classes + 1,
+                     breaks = NULL)
+  matrix_set[names(settings)] <- settings
   
   # calculate size_now and size_next
   size_now <- NULL
@@ -351,8 +375,12 @@ make_growth_data_matrix <- function(data, classes) {
                            size_next = (size_next / sizemax)) 
   
   # calculate breaks
-  break_set <- c(0, quantile(data_clean$size_now,
-                             p = seq(0.1, 0.9, length = (nbreaks - 2))), 1)
+  if (is.null(matrix_set$breaks)) {
+    break_set <- c(0, quantile(data_clean$size_now,
+                               p = seq(0.1, 0.9, length = (matrix_set$nbreaks - 2))), 1)
+  } else {
+    break_set <- matrix_set$breaks
+  }
   
   label_set <- seq_len(length(break_set) - 1)
   data_clean$bin_now <- as.numeric(cut(data_clean$size_now,
@@ -374,10 +402,43 @@ make_growth_data_matrix <- function(data, classes) {
   
 }
 
-# internal function: calculate structured capture history from long-format data
-calculate_capture_history <- function(data, classes) {
+# internal function: convert population data in long format to a list of structured matrices
+make_pop_data_matrix <- function(data, classes, settings) {
   
-  nbreaks <- classes + 1
+  # unpack settings
+  matrix_set <- list(nbreaks = classes + 1,
+                     breaks = NULL)
+  matrix_set[names(settings)] <- settings
+  
+  # calculate breaks
+  if (is.null(matrix_set$breaks)) {
+    break_set <- c(0, quantile(data_clean$size_now,
+                               p = seq(0.1, 0.9, length = (matrix_set$nbreaks - 2))), 1)
+  } else {
+    break_set <- matrix_set$breaks
+  }
+  
+  # loop through sites and calculate hist in each time and site
+  popdata <- vector('list', length = length(unique(data$site)))
+  for (i in seq_along(unique(data$site))) {
+    data_sub <- data[(data$site == unique(data$site)[i]), ]
+    hist_tmp <- tapply(data$size, data$time, function(x) hist(x, breaks = break_set, plot = FALSE)$counts)
+    popdata[[i]] <- matrix(unlist(hist_tmp), nrow = (length(break_set) - 1))
+  }
+  
+  names(popdata) <- unique(data$site)
+  
+  popdata
+  
+}
+
+# internal function: calculate structured capture history from long-format data
+calculate_capture_history <- function(data, classes, settings) {
+  
+  # unpack settings
+  matrix_set <- list(nbreaks = classes + 1,
+                     breaks = NULL)
+  matrix_set[names(settings)] <- settings
   
   # remove NAs in fish IDs
   if (any(is.na(data$id))) {
@@ -417,8 +478,12 @@ calculate_capture_history <- function(data, classes) {
   }
   
   # calculate breaks
-  break_set <- c(0, quantile(data$size,
-                             p = seq(0.1, 0.9, length = (nbreaks - 2))), 1)
+  if (is.null(matrix_set$breaks)) {
+    break_set <- c(0, quantile(data_clean$size_now,
+                               p = seq(0.1, 0.9, length = (matrix_set$nbreaks - 2))), 1)
+  } else {
+    break_set <- matrix_set$breaks
+  }
   
   
 }
