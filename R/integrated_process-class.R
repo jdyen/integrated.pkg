@@ -190,7 +190,7 @@ stage <- function (classes, replicates, params) {
   survival_vec <- greta::uniform(min = 0, max = 1, dim = c(1, classes))
   for (i in seq_len(replicates)) {
     survival_list[[i]] <- surv_max[, , i] * greta::uniform(min = 0, max = 1,
-                                                           dim = dim(surv_max[, , i]))
+                                                           dim = c(classes, classes))
     survival_list[[i]] <- sweep(survival_list[[i]], 2, colSums(survival_list[[i]]), '/')
     survival_list[[i]] <- sweep(survival_list[[i]], 2, survival_vec, '*')
     survival[, , i] <- survival_list[[i]] 
@@ -237,7 +237,7 @@ age <- function (classes, replicates, params) {
   survival_vec <- greta::uniform(min = 0, max = 1, dim = c(1, classes))
   for (i in seq_len(replicates)) {
     survival_list[[i]] <- surv_max[, , i] * greta::uniform(min = 0, max = 1,
-                                                           dim = dim(surv_max[, , i]))
+                                                           dim = c(classes, classes))
     survival_list[[i]] <- sweep(survival_list[[i]], 2, colSums(survival_list[[i]]), '/')
     survival_list[[i]] <- sweep(survival_list[[i]], 2, survival_vec, '*')
     survival[, , i] <- survival_list[[i]] 
@@ -278,7 +278,7 @@ unstructured <- function (classes, replicates, params) {
   survival_vec <- greta::uniform(min = 0, max = 1, dim = c(1, classes))
   for (i in seq_len(replicates)) {
     survival_list[[i]] <- surv_max[, , i] * greta::uniform(min = 0, max = 1,
-                                                           dim = dim(surv_max[, , i]))
+                                                           dim = c(classes, classes))
     survival_list[[i]] <- sweep(survival_list[[i]], 2, colSums(survival_list[[i]]), '/')
     survival_list[[i]] <- sweep(survival_list[[i]], 2, survival_vec, '*')
     survival[, , i] <- survival_list[[i]] 
