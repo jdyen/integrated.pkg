@@ -259,7 +259,7 @@ define_abundance_module <- function (data, integrated_process, observation_model
   # use separate process models if they exist
   if (integrated_process$replicates > 1) {
     
-    for (i in seq_len(integrated_process$replicates)) {
+    for (i in seq_along(integrated_process$replicate_id)) {
       mu_iterated[[i]] <- iterate_state((integrated_process$parameters$survival[[integrated_process$replicate_id[i]]] +
                                            integrated_process$parameters$fecundity[[integrated_process$replicate_id[i]]]),
                                         integrated_process$mu_initial[[integrated_process$replicate_id[i]]],
