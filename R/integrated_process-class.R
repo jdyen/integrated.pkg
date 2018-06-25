@@ -75,9 +75,11 @@ define_integrated_process <- function (type, classes,
   if (type == 'MPM') {
     
     # create transition matrix    
-    params <- get(structure)(classes = classes,
-                             replicates = replicates,
-                             params = params_list)
+    params <- lapply(seq_len(replicates), function(x) get(structure)(classes = classes,
+                                                                     params = params_list))
+    # params <- get(structure)(classes = classes,
+    #                          replicates = replicates,
+    #                          params = params_list)
     parameters <- list(transitions = vector('list', length = replicates),
                        standard_deviations = params$standard_deviations)
     mu_initial <- lapply(seq_len(replicates),
@@ -85,10 +87,10 @@ define_integrated_process <- function (type, classes,
                                                       sdlog = 4.0,
                                                       dim = classes))
     parameters$survival <- lapply(seq_len(replicates),
-                                  function(i) array(params$survival[, , i],
+                                  function(i) array(params[[i]]$survival,
                                                     dim = c(classes, classes)))
     parameters$fecundity <- lapply(seq_len(replicates),
-                                  function(i) array(params$fecundity[, , i],
+                                  function(i) array(params[[i]]$fecundity,
                                                     dim = c(classes, classes)))
     parameters$density_parameter <- greta::uniform(min = params_list$density_lower,
                                                    max = params_list$density_upper, dim = 1)
@@ -164,48 +166,37 @@ as.integrated_process <- function (model) {
 }
 
 # internal function: create stage-structured matrix model with faster array setup
-stage <- function (classes, replicates, params) {
+stage <- function (classes, params) {
   
   # survival prior
-  surv_max <- vector('list', length = replicates)
-    
-  for (i in seq_len(replicates)) {
-
-    surv_max[[i]] <- matrix(0.0001, nrow = classes, ncol = classes)
-    diag(surv_max[[i]]) <- 1
-    
-    for (j in seq_len(classes)) {
-      if (j < classes) {
-        surv_max[[i]][j + 1, j] <- 1
-        if (j < (classes - 1)) {
-          surv_max[[i]][j + 2, j] <- 1
-        }
-      } 
-    }
-    
-  }
-
-  # standardise survival matrix
-  survival <- array(NA, dim = c(classes, classes, replicates))
-  survival_list <- vector('list', length = replicates)
-  survival_vec <- greta::uniform(min = 0, max = 1, dim = c(classes, 1))
-  for (i in seq_len(replicates)) {
-    surv_max[[i]] <- greta::as_data(surv_max[[i]])
-    survival_list[[i]] <- surv_max[[i]] * greta::uniform(min = 0, max = 1,
-                                                         dim = c(classes, classes))
-    survival_list[[i]] <- sweep(survival_list[[i]], 2, colSums(survival_list[[i]]), '/')
-    survival_list[[i]] <- sweep(survival_list[[i]], 2, survival_vec, '*')
-    survival[, , i] <- survival_list[[i]] 
+  surv_max <- matrix(0.0001, nrow = classes, ncol = classes)
+  diag(surv_max) <- 1
+  
+  for (j in seq_len(classes)) {
+    if (j < classes) {
+      surv_max[j + 1, j] <- 1
+      if (j < (classes - 1)) {
+        surv_max[j + 2, j] <- 1
+      }
+    } 
   }
   
+  # standardise survival matrix
+  survival_vec <- greta::uniform(min = 0, max = 1, dim = c(classes, 1))
+  surv_max <- greta::as_data(surv_max)
+  survival <- surv_max * greta::uniform(min = 0, max = 1,
+                                        dim = c(classes, classes))
+  survival <- sweep(survival, 2, colSums(survival), '/')
+  survival <- sweep(survival, 2, survival_vec, '*')
+  
   # fecundity prior
-  fec_min <- array(0.0, dim = c(classes, classes, replicates))
-  fec_min[1, classes, ] <- rep(params$fec_lower, times = replicates)
-  fec_max <- array(0.0001, dim = c(classes, classes, replicates))
-  fec_max[1, classes, ] <- rep(params$fec_upper, times = replicates)
+  fec_min <- matrix(0.0, nrow = classes, ncol = classes)
+  fec_min[1, classes] <- params$fec_lower
+  fec_max <- matrix(0.0001, nrow = classes, ncol = classes)
+  fec_max[1, classes] <- params$fec_upper
   fec_max <- greta::as_data(fec_max)
   fecundity <- fec_min + (fec_max - fec_min) * greta::uniform(min = 0, max = 1,
-                                                              dim = dim(fec_max)) 
+                                                              dim = c(classes, classes)) 
   
   # collate outputs
   params <- list(survival = survival,
