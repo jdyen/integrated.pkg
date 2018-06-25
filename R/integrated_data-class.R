@@ -108,7 +108,7 @@ define_integrated_data <- function (data,
     # if there is more than one replicate
     if (integrated_process$replicates > 1) {
       # check that there is one data element for each replicate
-      if (length(data) != integrated_process$replicate_id) {
+      if (length(data) != length(integrated_process$replicate_id)) {
         stop(paste0('abundance data have ', length(data), ' elements but ',
                     ' integrated_process contains ', integrated_process$replicates,
                     ' replicates'),
