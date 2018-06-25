@@ -28,6 +28,7 @@
 
 define_integrated_process <- function (type, classes,
                                        structure = 'stage',
+                                       density_dependence = 'none',
                                        replicates = 1,
                                        params = list()) {
   
@@ -72,7 +73,9 @@ define_integrated_process <- function (type, classes,
   if (type == 'MPM') {
     
     # create transition matrix    
-    params <- get(structure)(classes = classes, replicates = replicates, params = params_list)
+    params <- get(structure)(classes = classes,
+                             replicates = replicates,
+                             params = params_list)
     parameters <- list(transitions = vector('list', length = replicates),
                        standard_deviations = params$standard_deviations)
     mu_initial <- lapply(seq_len(replicates),
@@ -85,12 +88,14 @@ define_integrated_process <- function (type, classes,
     parameters$fecundity <- lapply(seq_len(replicates),
                                   function(i) array(params$fecundity[, , i],
                                                     dim = c(classes, classes)))
+    parameters$density_parameter <- greta::uniform(min = 0.0, max = 5.0, dim = 1)
   }
   
   integrated_process <- list(parameters = parameters,
                              mu_initial = mu_initial,
                              type = type,
                              structure = structure,
+                             density_dependence = density_dependence,
                              classes = classes,
                              replicates = replicates,
                              replicate_id = replicate_id)
@@ -170,7 +175,7 @@ stage <- function (classes, replicates, params) {
         if (j < (classes - 1)) {
           surv_max[j + 2, j, i] <- 1
         }
-      }
+      } 
     }
     
   } 

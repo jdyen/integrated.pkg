@@ -263,7 +263,9 @@ define_abundance_module <- function (data, integrated_process, observation_model
       mu_iterated[[i]] <- iterate_state((integrated_process$parameters$survival[[integrated_process$replicate_id[i]]] +
                                            integrated_process$parameters$fecundity[[integrated_process$replicate_id[i]]]),
                                         integrated_process$mu_initial[[integrated_process$replicate_id[i]]],
-                                        seq_len(ncol(data[[i]])))
+                                        integrated_process$parameters$density_parameter,
+                                        seq_len(ncol(data[[i]])),
+                                        integrated_process$density_dependence)
       
     } 
   } else {
@@ -273,7 +275,9 @@ define_abundance_module <- function (data, integrated_process, observation_model
       mu_iterated[[i]] <- iterate_state((integrated_process$parameters$survival[[1]] +
                                            integrated_process$parameters$fecundity[[1]]),
                                         integrated_process$mu_initial[[1]],
-                                        seq_len(ncol(data[[i]])))
+                                        integrated_process$parameters$density_parameter,
+                                        seq_len(ncol(data[[i]])),
+                                        integrated_process$density_dependence)
     
     } 
   }
