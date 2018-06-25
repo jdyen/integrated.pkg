@@ -181,10 +181,17 @@ stage <- function (classes, replicates, params) {
       } 
     }
     
-  } 
+  }
   surv_max <- greta::as_data(surv_max)
   survival <- surv_max * greta::uniform(min = 0, max = 1,
                                         dim = dim(surv_max))
+  
+  # standardise survival matrix
+  survival_vec <- greta::uniform(min = 0, max = 1, dim = c(1, classes))
+  for (i in seq_len(replicates)) {
+    survival[, , i] <- sweep(survival[, , i], 2, colSums(survival[, , i]), '/')
+    survival[, , i] <- sweep(survival[, , i], 2, survival_vec, '*')
+  }
   
   # fecundity prior
   fec_min <- array(0.0, dim = c(classes, classes, replicates))
@@ -223,6 +230,13 @@ age <- function (classes, replicates, params) {
   survival <- surv_max * greta::uniform(min = 0, max = 1,
                                          dim = dim(surv_max))
   
+  # standardise survival matrix
+  survival_vec <- greta::uniform(min = 0, max = 1, dim = c(1, classes))
+  for (i in seq_len(replicates)) {
+    survival[, , i] <- sweep(survival[, , i], 2, colSums(survival[, , i]), '/')
+    survival[, , i] <- sweep(survival[, , i], 2, survival_vec, '*')
+  }
+  
   # fecundity prior
   fec_min <- array(0.0, dim = c(classes, classes, replicates))
   fec_min[1, classes, ] <- rep(params$fec_lower, times = replicates)
@@ -254,6 +268,13 @@ unstructured <- function (classes, replicates, params) {
   survival <- surv_max * greta::uniform(min = 0, max = 1,
                                         dim = dim(surv_max))
   
+  # standardise survival matrix
+  survival_vec <- greta::uniform(min = 0, max = 1, dim = c(1, classes))
+  for (i in seq_len(replicates)) {
+    survival[, , i] <- sweep(survival[, , i], 2, colSums(survival[, , i]), '/')
+    survival[, , i] <- sweep(survival[, , i], 2, survival_vec, '*')
+  }
+
   # fecundity prior
   fec_min <- array(0.0, dim = c(classes, classes, replicates))
   fec_min[1, seq_len(classes)[-1], ] <- rep(params$fec_lower, times = replicates)
