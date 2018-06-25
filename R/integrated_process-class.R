@@ -180,10 +180,10 @@ stage <- function (classes, params) {
   # standardise survival matrix
   survival_vec <- greta::uniform(min = 0, max = 1, dim = c(classes, 1))
   surv_max <- greta::as_data(surv_max)
-  survival <- surv_max * greta::uniform(min = 0, max = 1,
-                                        dim = c(classes, classes))
-  survival <- greta::sweep(survival, 2, colSums(survival), '/')
-  survival <- greta::sweep(survival, 2, survival_vec, '*')
+  survival_tmp <- surv_max * greta::uniform(min = 0, max = 1,
+                                            dim = c(classes, classes))
+  survival_tmp2 <- greta::sweep(survival_tmp, 2, colSums(survival_tmp), '/')
+  survival <- greta::sweep(survival_tmp2, 2, survival_vec, '*')
   
   # fecundity prior
   fec_min <- matrix(0.0, nrow = classes, ncol = classes)
