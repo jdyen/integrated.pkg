@@ -343,7 +343,7 @@ make_growth_data_matrix <- function(data, classes) {
     for (j in seq_len((length(size_tmp) - 1))) {
       size_now <- c(size_now, size_tmp[j])
       size_next <- c(size_next, size_tmp[j + 1])
-      id <- c(id, unique(data_sub$id)[1])
+      id <- c(id, unique(data_sub$id)[i])
     }
   }
   data_clean <- data.frame(id = id,
@@ -371,6 +371,55 @@ make_growth_data_matrix <- function(data, classes) {
   }
   
   growth_matrix
+  
+}
+
+# internal function: calculate structured capture history from long-format data
+calculate_capture_history <- function(data, classes) {
+  
+  nbreaks <- classes + 1
+  
+  # remove NAs in fish IDs
+  if (any(is.na(data$id))) {
+    data <- data[!is.na(data$id), ]
+  }
+  
+  # work out how many times each tagged fish was captured
+  recaptures <- tapply(rep(1, nrow(data)), data$id, sum)
+  
+  # filter to fish that were recaptured at least once
+  recaptures <- recaptures[recaptures > 1]
+  
+  # pull out the sample dates (years at this stage; go to season/month perhaps)
+  times <- sort(unique(data$time))
+  
+  # prepare an output matrix with one row for each fish captured more than once
+  capture_history <- matrix(NA, nrow = length(recaptures), ncol = length(times))
+  size_history <- matrix(NA, nrow = length(recaptures), ncol = length(times))
+  
+  # add sample dates and fishids to output matrix
+  colnames(capture_history) <- colnames(size_history) <- times
+  rownames(capture_history) <- rownames(size_history) <- names(recaptures)
+  
+  # for each fish, work out which years it was caught
+  for (i in seq_along(recaptures)) {
+    
+    # subset data to a single fish
+    data_sub <- data[data$id == names(recaptures)[i], ]
+    
+    # calculate capture history
+    capture_history[i, ] <- ifelse(times %in% data_sub$time, 1, 0)
+    
+    # calculate size at each recapture
+    size_tmp <- tapply(data_sub$size, data_sub$time, mean)
+    size_history[i, times %in% names(time_tmp)] <- size_tmp 
+    
+  }
+  
+  # calculate breaks
+  break_set <- c(0, quantile(data$size,
+                             p = seq(0.1, 0.9, length = (nbreaks - 2))), 1)
+  
   
 }
 
