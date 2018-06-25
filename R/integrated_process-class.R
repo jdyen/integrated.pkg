@@ -167,30 +167,32 @@ as.integrated_process <- function (model) {
 stage <- function (classes, replicates, params) {
   
   # survival prior
-  surv_max <- array(0.0001, dim = c(classes, classes, replicates))
-  for (i in seq_len(replicates)) {
+  surv_max <- vector('list', length = replicates)
     
-    diag(surv_max[, , i]) <- 1
+  for (i in seq_len(replicates)) {
+
+    surv_max[[i]] <- matrix(0.0001, nrow = classes, ncol = classes)
+    diag(surv_max[[i]]) <- 1
     
     for (j in seq_len(classes)) {
       if (j < classes) {
-        surv_max[j + 1, j, i] <- 1
+        surv_max[[i]][j + 1, j] <- 1
         if (j < (classes - 1)) {
-          surv_max[j + 2, j, i] <- 1
+          surv_max[[i]][j + 2, j] <- 1
         }
       } 
     }
     
   }
-  surv_max <- greta::as_data(surv_max)
 
   # standardise survival matrix
   survival <- array(NA, dim = dim(surv_max))
   survival_list <- vector('list', length = replicates)
   survival_vec <- greta::uniform(min = 0, max = 1, dim = c(1, classes))
   for (i in seq_len(replicates)) {
-    survival_list[[i]] <- surv_max[, , i] * greta::uniform(min = 0, max = 1,
-                                                           dim = c(classes, classes))
+    surv_max[[i]] <- greta::as_data(surv_max[[i]])
+    survival_list[[i]] <- surv_max[[i]] * greta::uniform(min = 0, max = 1,
+                                                         dim = c(classes, classes))
     survival_list[[i]] <- sweep(survival_list[[i]], 2, colSums(survival_list[[i]]), '/')
     survival_list[[i]] <- sweep(survival_list[[i]], 2, survival_vec, '*')
     survival[, , i] <- survival_list[[i]] 
