@@ -83,12 +83,9 @@ define_integrated_process <- function (type, classes,
                          function(x) greta::lognormal(meanlog = 0.0,
                                                       sdlog = 4.0,
                                                       dim = classes))
-    parameters$survival <- lapply(seq_len(replicates),
-                                  function(i) array(params[[i]]$survival,
-                                                    dim = c(classes, classes)))
-    parameters$fecundity <- lapply(seq_len(replicates),
-                                  function(i) array(params[[i]]$fecundity,
-                                                    dim = c(classes, classes)))
+    parameters$survival <- params$survival
+    parameters$survival_vec <- params$survival_vec
+    parameters$fecundity <- params$fecundity
     parameters$density_parameter <- greta::uniform(min = params_list$density_lower,
                                                    max = params_list$density_upper, dim = 1)
   }
