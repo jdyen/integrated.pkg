@@ -106,7 +106,7 @@ build_integrated_model <- function (integrated_process, ...) {
           for (j in seq_along(data_tmp$data_module[[i]])) {
             greta::distribution(data_tmp$data_module[[i]][[j]]) <-
               greta::multinomial(size = sum(data_tmp$data_module[[i]][[j]]),
-                                 prob = t(integrated_process$parameters$survival[[i]][j, ]),
+                                 prob = t(integrated_process$parameters$survival[[integrated_process$replicate_id[i]]][j, ]),
                                  dim = 1)
             
           }

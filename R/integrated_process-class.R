@@ -36,6 +36,18 @@ define_integrated_process <- function (type, classes,
          call. = FALSE)
   }
   
+  # account for repeated observations of multiple replicates
+  if (length(replicates) > 1) {
+    replicate_id <- replicates
+    replicates <- length(unique(replicates))
+  } else {
+    if (replicates > 1) {
+      replicate_id <- seq_len(replicates)
+    } else {
+      replicate_id <- NULL
+    }
+  }
+  
   # fill params_list
   params_list <- list(fec_lower = 0,
                       fec_upper = 1000)
@@ -80,7 +92,8 @@ define_integrated_process <- function (type, classes,
                              type = type,
                              structure = structure,
                              classes = classes,
-                             replicates = replicates)
+                             replicates = replicates,
+                             replicate_id = replicate_id)
   
   integrated_process
   
