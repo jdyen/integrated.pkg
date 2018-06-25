@@ -120,7 +120,9 @@ build_integrated_model <- function (integrated_process, ...) {
   } 
   
   c(do.call('c', integrated_process$parameters$survival),
-    do.call('c', integrated_process$parameters$fecundity))
+    do.call('c', integrated_process$parameters$fecundity),
+    do.call('c', integrated_process$parameters$survival_vec),
+    do.call('c', integrated_process$parameters$density_parameter))
   
 }
 
