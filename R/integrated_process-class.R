@@ -186,7 +186,7 @@ stage <- function (classes, replicates, params) {
   }
 
   # standardise survival matrix
-  survival <- array(NA, dim = dim(surv_max))
+  survival <- array(NA, dim = c(classes, classes, replicates))
   survival_list <- vector('list', length = replicates)
   survival_vec <- greta::uniform(min = 0, max = 1, dim = c(1, classes))
   for (i in seq_len(replicates)) {
