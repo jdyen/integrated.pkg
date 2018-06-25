@@ -182,9 +182,8 @@ stage <- function (classes, params) {
   surv_max <- greta::as_data(surv_max)
   survival_tmp <- surv_max * greta::uniform(min = 0, max = 1,
                                             dim = c(classes, classes))
-  survival_tmp2 <- greta::sweep(survival_tmp, 2, colSums(survival_tmp), '/')
-  survival <- greta::sweep(survival_tmp2, 2, survival_vec, '*')
-  
+  survival <- greta::sweep(survival_tmp, 2, colSums(survival_tmp), '/')
+
   # fecundity prior
   fec_min <- matrix(0.0, nrow = classes, ncol = classes)
   fec_min[1, classes] <- params$fec_lower
@@ -196,7 +195,8 @@ stage <- function (classes, params) {
   
   # collate outputs
   params <- list(survival = survival,
-                 fecundity = fecundity)
+                 fecundity = fecundity,
+                 survival_vec = survival_vec)
   
   params
   
