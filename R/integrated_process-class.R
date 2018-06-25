@@ -58,16 +58,22 @@ define_integrated_process <- function (type, classes,
   
   if (type == 'IPM') {
     
-    parameters <- list()
-    parameters$transitions <- build_integrated_ipm(classes = classes,
-                                                   replicates = replicates,
-                                                   gp_tol = 1e-5)
+    params <- lapply(seq_len(replicates),
+                     build_integrated_ipm(classes = classes,
+                                          gp_tol = 1e-5))
     
     mu_initial <- lapply(seq_len(replicates),
                          function(x) greta::lognormal(meanlog = 0.0,
                                                       sdlog = 2.0,
                                                       dim = classes))
     
+    parameters <- list()
+    parameters$survival <- lapply(seq_len(replicates), function(i) params[[i]]$survival) 
+    parameters$survival_vec <- lapply(seq_len(replicates), function(i) params[[i]]$survival_vec) 
+    parameters$fecundity <- lapply(seq_len(replicates), function(i) params[[i]]$fecundity) 
+    parameters$density_parameter <- greta::uniform(min = params_list$density_lower,
+                                                   max = params_list$density_upper, dim = 1)
+
     structure <- 'IPM'
 
   }
@@ -77,15 +83,15 @@ define_integrated_process <- function (type, classes,
     # create transition matrix    
     params <- lapply(seq_len(replicates), function(x) get(structure)(classes = classes,
                                                                      params = params_list))
-    parameters <- list(transitions = vector('list', length = replicates),
-                       standard_deviations = params$standard_deviations)
+    
     mu_initial <- lapply(seq_len(replicates),
                          function(x) greta::lognormal(meanlog = 0.0,
                                                       sdlog = 4.0,
                                                       dim = classes))
-    parameters$survival <- params$survival
-    parameters$survival_vec <- params$survival_vec
-    parameters$fecundity <- params$fecundity
+    parameters <- list()
+    parameters$survival <- lapply(seq_len(replicates), function(i) params[[i]]$survival) 
+    parameters$survival_vec <- lapply(seq_len(replicates), function(i) params[[i]]$survival_vec) 
+    parameters$fecundity <- lapply(seq_len(replicates), function(i) params[[i]]$fecundity) 
     parameters$density_parameter <- greta::uniform(min = params_list$density_lower,
                                                    max = params_list$density_upper, dim = 1)
   }
@@ -271,55 +277,45 @@ unstructured <- function (classes, params) {
 }
 
 # internal function: create an IPM evaluated at `classes`
-build_integrated_ipm <- function (classes, replicates, gp_tol) {
+build_integrated_ipm <- function (classes, gp_tol) {
   
-  params <- vector('list', length = replicates)
+  # ipm transition kernel
+  ipm_len <- greta::lognormal(mean = 0.0, sd = 1.0, dim = 1)
+  ipm_sigma <- greta::lognormal(mean = 0.0, sd = 3.0, dim = 1)
+  ipm_kern <- greta.gp::rbf(lengthscales = ipm_len, variance = ipm_sigma)
+  ipm_mean <- greta::ilogit(greta.gp::gp(x = seq_len(classes),
+                                         kernel = ipm_kern,
+                                         tol = gp_tol))
+  ipm_sigma_main <- greta::lognormal(mean = 0.0, sd = 3.0, dim = 1)
   
-  for (i in seq_len(replicates)) {
-    
-    # ipm transition kernel
-    ipm_len <- greta::lognormal(mean = 0.0, sd = 1.0, dim = 1)
-    ipm_sigma <- greta::lognormal(mean = 0.0, sd = 3.0, dim = 1)
-    ipm_kern <- greta.gp::rbf(lengthscales = ipm_len, variance = ipm_sigma)
-    ipm_mean <- greta::ilogit(greta.gp::gp(x = seq_len(classes),
-                                          kernel = ipm_kern,
-                                          tol = gp_tol))
-    ipm_sigma_main <- greta::lognormal(mean = 0.0, sd = 3.0, dim = 1)
-    
-    # survival kernel
-    surv_len <- greta::lognormal(mean = 0.0, sd = 1.0, dim = 1)
-    surv_sigma <- greta::lognormal(mean = 0.0, sd = 3.0, dim = 1)
-    surv_kern <- greta.gp::rbf(lengthscales = surv_len, variance = surv_sigma)
-    ipm_surv <- greta::ilogit(greta.gp::gp(x = seq_len(classes),
-                                          kernel = surv_kern,
-                                          tol = gp_tol))
-    
-    # fecundity kernel
-    fec_len <- greta::lognormal(mean = 0.0, sd = 1.0, dim = 1)
-    fec_sigma <- greta::lognormal(mean = 0.0, sd = 3.0, dim = 1)
-    fec_kern <- greta.gp::rbf(lengthscales = fec_len, variance = fec_sigma)
-    ipm_fec <- exp(greta.gp::gp(x = seq_len(classes),
-                               kernel = fec_kern,
-                               tol = gp_tol))
-    
-    # convert flattened vector into matrix
-    bins_mat <- matrix(rep(seq_len(classes), times = classes), ncol = classes)
-    ipm_dist <- greta::sweep(greta::as_data(bins_mat), 2, ipm_mean, '-')
-    ipm <- exp(-(ipm_dist * ipm_dist) / (2 * ipm_sigma_main))
-    
-    # standardise so that columns sum to one
-    ipm <- greta::sweep(ipm, 2, greta::colSums(ipm), '/')
-    
-    # standardise to incorporate survival per column
-    ipm <- greta::sweep(ipm, 2, ipm_surv, '*')
-    
-    # add fecundity elements to kernel
-    ipm[1, ] <- ipm[1, ] + t(ipm_fec)
-    
-    params[[i]] <- ipm
-    
-  }
+  # survival kernel
+  surv_len <- greta::lognormal(mean = 0.0, sd = 1.0, dim = 1)
+  surv_sigma <- greta::lognormal(mean = 0.0, sd = 3.0, dim = 1)
+  surv_kern <- greta.gp::rbf(lengthscales = surv_len, variance = surv_sigma)
+  ipm_surv <- greta::ilogit(greta.gp::gp(x = seq_len(classes),
+                                         kernel = surv_kern,
+                                         tol = gp_tol))
   
+  # fecundity kernel
+  fec_len <- greta::lognormal(mean = 0.0, sd = 1.0, dim = 1)
+  fec_sigma <- greta::lognormal(mean = 0.0, sd = 3.0, dim = 1)
+  fec_kern <- greta.gp::rbf(lengthscales = fec_len, variance = fec_sigma)
+  ipm_fec <- exp(greta.gp::gp(x = seq_len(classes),
+                              kernel = fec_kern,
+                              tol = gp_tol))
+  
+  # convert flattened vector into matrix
+  bins_mat <- matrix(rep(seq_len(classes), times = classes), ncol = classes)
+  ipm_dist <- greta::sweep(greta::as_data(bins_mat), 2, ipm_mean, '-')
+  ipm <- exp(-(ipm_dist * ipm_dist) / (2 * ipm_sigma_main))
+  
+  # standardise so that columns sum to one
+  ipm <- greta::sweep(ipm, 2, greta::colSums(ipm), '/')
+
+  params <- list(survival = ipm,
+                 survival_vec = ipm_surv,
+                 fecundity = ipm_fec)
+    
   params
    
 }
