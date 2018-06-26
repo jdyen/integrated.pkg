@@ -629,7 +629,7 @@ calculate_history_probability <- function(history, capture_probability, paramete
 }
 
 # internal: tensorflow function to calculate probabilities of CMR histories
-tf_calculate_history_probability <- function (capture_probability, survival_matrix, history) {
+tf_calculate_history_probability <- function (capture_probability, parameters, history) {
   
   # loop through histories
   probs <- rep(0, length(history))
@@ -638,7 +638,8 @@ tf_calculate_history_probability <- function (capture_probability, survival_matr
     probs_tmp <- tf$constant(1, dtype = tf$float32)
     for (j in seq_along(history[[i]])) {
       
-      state_vector <- tf$matmul(survival_matrix, history[[i]][j, ], transpose_a = FALSE, transpose_b = TRUE)
+      state_vector <- tf$matmul(parameters, tf$expand_dims(history[[i]][j, ], axis = 1),
+                                transpose_a = FALSE, transpose_b = FALSE)
       
       if (sum(history[[i]][j, ]) > 0) {
         
