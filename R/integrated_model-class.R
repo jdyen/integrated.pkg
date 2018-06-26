@@ -35,8 +35,8 @@ build_integrated_model <- function (integrated_process, ...) {
     
     data_tmp <- data_modules[[i]]
     
-    if (!(data_tmp$process_link %in% c('abundance', 'growth'))) {
-      stop('only abundance and growth modules are currently implemented',
+    if (!(data_tmp$process_link %in% c('abundance', 'growth', 'mark_recapture'))) {
+      stop('only abundance, growth, and mark_recapture modules are currently implemented',
            call. = FALSE)
     }
     
@@ -118,6 +118,15 @@ build_integrated_model <- function (integrated_process, ...) {
     }
     
   } 
+  
+  if (data_tmp$process_link == 'mark_recapture') {
+    
+    greta::distribution(data_tmp$data_module$counts) <-
+      greta::multinomial(size = sum(data_tmp$data_module$counts),
+                         prob = data_tmp$data_module$probs,
+                         dim = 1)
+    
+  }
   
   c(do.call('c', integrated_process$parameters$survival),
     do.call('c', integrated_process$parameters$fecundity),
