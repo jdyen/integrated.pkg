@@ -344,7 +344,7 @@ define_mark_recapture_module <- function (data, integrated_process, observation_
   # reduce capture histories to a list without pre/post capture information
   history <- vector('list', length = nrow(data$structured))
   ntime <- ncol(data$structured)
-  for (i in seq_along(cmr_module)) {
+  for (i in seq_along(history)) {
     data_tmp <- data$structured[i, which.max(data$binary[i, ]):(ntime - which.max(rev(data$binary[i, ])) + 1)]
     history[[i]] <- data_tmp
   }
@@ -369,7 +369,7 @@ define_mark_recapture_module <- function (data, integrated_process, observation_
   # define observation matrix
   capture_probability <- greta::uniform(min = 0.5, max = 0.9,
                                         dim = c(integrated_process$classes))
-  
+   
   # calculate probability of each cmr history
   probs <- vector('list', length = integrated_process$replicates)
   for (i in seq_len(integrated_process$replicates)) {
@@ -378,7 +378,7 @@ define_mark_recapture_module <- function (data, integrated_process, observation_
     probs[[i]] <- calculate_history_probability(history = unique_history,
                                                 capture_probability = capture_probability,
                                                 parameters = parameters_tmp)
-  }
+  } 
   
   # collate outputs
   cmr_module <- list(history = history,
