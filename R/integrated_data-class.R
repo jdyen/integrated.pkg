@@ -351,7 +351,7 @@ define_community_module <- function (data, integrated_process, observation_model
 make_growth_data_matrix <- function(data, classes, settings) {
   
   # unpack settings
-  matrix_set <- list(nbreaks = classes + 1,
+  matrix_set <- list(nbreaks = NULL,
                      breaks = NULL)
   matrix_set[names(settings)] <- settings
   
@@ -376,10 +376,21 @@ make_growth_data_matrix <- function(data, classes, settings) {
   
   # calculate breaks
   if (is.null(matrix_set$breaks)) {
+    if (is.null(matrix_set$nbreaks)) {
+      matrix_set$nbreaks <- classes + 1
+    }
     break_set <- c(0, quantile(data_clean$size_now,
                                p = seq(0.1, 0.9, length = (matrix_set$nbreaks - 2))), 1)
   } else {
     break_set <- matrix_set$breaks
+    if (is.null(matrix_set$nbreaks)) {
+      matrix_set$nbreaks <- length(break_set)
+    }
+    if (matrix_set$nbreaks != length(break_set)) {
+      stop(paste0(length(break_set), ' breaks have been specified but nbreaks = ',
+                  matrix_set$nbreaks),
+           call. = FALSE)
+    }
   }
   
   label_set <- seq_len(length(break_set) - 1)
@@ -391,7 +402,7 @@ make_growth_data_matrix <- function(data, classes, settings) {
                                         labels = label_set)) 
   
   # calculate transition probabilities  
-  growth_matrix <- matrix(0, nrow = (nbreaks - 1), ncol = (nbreaks - 1))
+  growth_matrix <- matrix(0, nrow = (matrix_set$nbreaks - 1), ncol = (matrix_set$nbreaks - 1))
   for (i in seq_len(nrow(data_clean))) {
     xind <- data_clean$bin_next[i]
     yind <- data_clean$bin_now[i]
@@ -412,11 +423,22 @@ make_pop_data_matrix <- function(data, classes, settings) {
   
   # calculate breaks
   if (is.null(matrix_set$breaks)) {
+    if (is.null(matrix_set$nbreaks)) {
+      matrix_set$nbreaks <- classes + 1
+    }
     break_set <- c(0, quantile(data_clean$size_now,
                                p = seq(0.1, 0.9, length = (matrix_set$nbreaks - 2))), 1)
   } else {
     break_set <- matrix_set$breaks
-  }
+    if (is.null(matrix_set$nbreaks)) {
+      matrix_set$nbreaks <- length(break_set)
+    }
+    if (matrix_set$nbreaks != length(break_set)) {
+      stop(paste0(length(break_set), ' breaks have been specified but nbreaks = ',
+                  matrix_set$nbreaks),
+           call. = FALSE)
+    }
+  }  
   
   # loop through sites and calculate hist in each time and site
   popdata <- vector('list', length = length(unique(data$site)))
@@ -436,7 +458,7 @@ make_pop_data_matrix <- function(data, classes, settings) {
 calculate_capture_history <- function(data, classes, settings) {
   
   # unpack settings
-  matrix_set <- list(nbreaks = classes + 1,
+  matrix_set <- list(nbreaks = NULL,
                      breaks = NULL)
   matrix_set[names(settings)] <- settings
   
@@ -479,10 +501,21 @@ calculate_capture_history <- function(data, classes, settings) {
   
   # calculate breaks
   if (is.null(matrix_set$breaks)) {
+    if (is.null(matrix_set$nbreaks)) {
+      matrix_set$nbreaks <- classes + 1
+    }
     break_set <- c(0, quantile(data_clean$size_now,
                                p = seq(0.1, 0.9, length = (matrix_set$nbreaks - 2))), 1)
   } else {
     break_set <- matrix_set$breaks
+    if (is.null(matrix_set$nbreaks)) {
+      matrix_set$nbreaks <- length(break_set)
+    }
+    if (matrix_set$nbreaks != length(break_set)) {
+      stop(paste0(length(break_set), ' breaks have been specified but nbreaks = ',
+                  matrix_set$nbreaks),
+           call. = FALSE)
+    }
   }
   
   
