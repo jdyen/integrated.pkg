@@ -121,10 +121,19 @@ build_integrated_model <- function (integrated_process, ...) {
   
   if (data_tmp$process_link == 'mark_recapture') {
     
-    greta::distribution(data_tmp$data_module$counts) <-
+    # if there are multiple data elements and only one process matrix
+    if (integrated_process$replicates == 1) {
+      
+      greta::distribution(data_tmp$data_module$counts) <-
       greta::multinomial(size = sum(data_tmp$data_module$counts),
-                         prob = data_tmp$data_module$probs,
+                         prob = data_tmp$data_module$probs[[1]],
                          dim = 1)
+      
+    } else {
+      
+      stop('CMR data must have one replicate only', call. = FALSE)
+      
+    }
     
   }
   
