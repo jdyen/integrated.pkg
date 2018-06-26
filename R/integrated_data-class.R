@@ -638,7 +638,7 @@ tf_calculate_history_probability <- function (capture_probability, survival_matr
     probs_tmp <- tf$constant(1, dtype = tf$float32)
     for (j in seq_along(history[[i]])) {
       
-      state_vector <- tf$matmul(survival_matrix, history[[i]][j, ], transpose_a = FALSE, tranpose_b = TRUE)
+      state_vector <- tf$matmul(survival_matrix, history[[i]][j, ], transpose_a = FALSE, transpose_b = TRUE)
       
       if (sum(history[[i]][j, ]) > 0) {
         
