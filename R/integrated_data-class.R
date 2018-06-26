@@ -368,7 +368,7 @@ define_mark_recapture_module <- function (data, integrated_process, observation_
   
   # define observation matrix
   capture_probability <- greta::uniform(min = 0.5, max = 0.9,
-                                        dim = c(integrated_process$classes))
+                                        dim = c(1, integrated_process$classes))
    
   # calculate probability of each cmr history
   probs <- vector('list', length = integrated_process$replicates)
