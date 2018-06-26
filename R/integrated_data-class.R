@@ -23,6 +23,7 @@
 #' @export
 #' 
 #' @import greta
+#' @import tensorflow
 #' @import greta.dynamics
 #' 
 #' @examples

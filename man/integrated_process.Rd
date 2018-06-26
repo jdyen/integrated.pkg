@@ -8,7 +8,7 @@
 \title{An integrated process object}
 \usage{
 define_integrated_process(type, classes, structure = "stage",
-  replicates = 1)
+  density_dependence = "none", replicates = 1, params = list())
 
 is.integrated_process(model)
 
@@ -23,11 +23,11 @@ is.integrated_process(model)
 
 \item{structure}{something}
 
+\item{density_dependence}{something}
+
 \item{replicates}{number of distinct populations}
 
 \item{...}{additional arguments}
-
-\item{density_dependence}{something}
 }
 \value{
 An object of class \code{integrated_process}, which can be passed to

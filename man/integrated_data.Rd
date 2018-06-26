@@ -9,7 +9,7 @@
 \title{An integrated data object}
 \usage{
 define_integrated_data(data, integrated_process, process_link,
-  observation_model = "naive")
+  observation_model = "naive", settings = list())
 
 is.integrated_data(model)
 
@@ -28,6 +28,8 @@ is.integrated_data(model)
 
 \item{observation_model}{something else}
 
+\item{settings}{a named list of settings passed to data formatting functions (see details)}
+
 \item{...}{additional arguments}
 }
 \value{
@@ -37,6 +39,12 @@ An object of class \code{integrated_data}, which contains information on the dat
 \description{
 A \code{integrated_model} call adds a component data object to process model
   created with \link[integrated]{define_integrated_process}
+}
+\details{
+Do something. The settings list can be used to specify how the data are binned, either with
+  specific breaks for binning or with the number of breaks to use. If these are not provided, the 
+  functions use the \code{classes} argument in the \code{integrated_process} to determine the number
+  of bins (\code{nbreaks = classes + 1}).
 }
 \examples{
 
