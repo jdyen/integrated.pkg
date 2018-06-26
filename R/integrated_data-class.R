@@ -363,7 +363,7 @@ define_mark_recapture_module <- function (data, integrated_process, observation_
     unique_cmr_matrix[[i]] <- matrix(ifelse(mat_tmp > 0, 1, 0), ncol = integrated_process$classes,
                                      byrow = TRUE)
   } 
-  cmr_count <- matrix(cmr_count, ncol = 1)
+  cmr_count <- matrix(cmr_count, nrow = 1)
   
   # define observation matrix
   capture_probability <- greta::uniform(min = 0.0, max = 1.0,
