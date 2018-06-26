@@ -117,25 +117,25 @@ build_integrated_model <- function (integrated_process, ...) {
       
     }
     
-  } 
-  
-  if (data_tmp$process_link == 'mark_recapture') {
-    
-    # if there are multiple data elements and only one process matrix
-    if (integrated_process$replicates == 1) {
+    if (data_tmp$process_link == 'mark_recapture') {
       
-      greta::distribution(data_tmp$data_module$counts) <-
-      greta::multinomial(size = sum(data_tmp$data_module$counts),
-                         prob = data_tmp$data_module$probs[[1]],
-                         dim = 1)
-      
-    } else {
-      
-      stop('CMR data must have one replicate only', call. = FALSE)
+      # if there are multiple data elements and only one process matrix
+      if (integrated_process$replicates == 1) {
+        
+        greta::distribution(data_tmp$data_module$count) <-
+          greta::multinomial(size = sum(data_tmp$data_module$count),
+                             prob = data_tmp$data_module$probs[[1]],
+                             dim = 1)
+        
+      } else {
+        
+        stop('CMR data must have one replicate only', call. = FALSE)
+        
+      }
       
     }
     
-  }
+  } 
   
   c(do.call('c', integrated_process$parameters$survival),
     do.call('c', integrated_process$parameters$fecundity),
