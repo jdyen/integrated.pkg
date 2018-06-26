@@ -658,6 +658,6 @@ tf_calculate_history_probability <- function (capture_probability, parameters, h
     
   } 
   
-  do.call(greta::.internals$tensors$tf_cbind, probs)
+  do.call('c', probs)
   
 }
