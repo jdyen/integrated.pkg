@@ -638,8 +638,8 @@ tf_calculate_history_probability <- function (capture_probability, parameters, h
     probs_tmp <- tf$constant(1, dtype = tf$float32)
     for (j in seq_along(history[[i]])) {
       
-      state_vector <- tf$matmul(parameters, tf$expand_dims(history[[i]][j, ], axis = tf$constant(1, dtype = tf$int32)),
-                                transpose_a = FALSE, transpose_b = FALSE)
+      state_vector <- tf$matmul(parameters, tf$expand_dims(history[[i]][j, ], axis = 0L),
+                                transpose_a = FALSE, transpose_b = TRUE)
       
       if (sum(history[[i]][j, ]) > 0) {
         
