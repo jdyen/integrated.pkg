@@ -643,13 +643,13 @@ tf_calculate_history_probability <- function (capture_probability, parameters, h
       
       if (sum(history[[i]][j, ]) > 0) {
         
-        probs_tmp <- tf$multiply(probs_tmp, tf$multiply(capture_probability, state_vector))
+        probs_tmp <- tf$multiply(probs_tmp, tf$reduce_prod(tf$multiply(capture_probability, state_vector)))
         
       } else {
         
         probs_tmp <- tf$multiply(probs_tmp,
-                                 tf$multiply(tf$subtract(tf$constant(1, dtype = tf$float32), capture_probability),
-                                             state_vector))
+                                 tf$reduce_prod(tf$multiply(tf$subtract(tf$constant(1, dtype = tf$float32), capture_probability),
+                                                            state_vector)))
         
       }
     }
