@@ -342,50 +342,50 @@ define_abundance_module <- function (data, integrated_process, observation_model
 define_mark_recapture_module <- function (data, integrated_process, observation_model) {
   
   # reduce capture histories to a list without pre/post capture information
-  cmr_module <- vector('list', length = nrow(data$structured))
+  history <- vector('list', length = nrow(data$structured))
   ntime <- ncol(data$structured)
   for (i in seq_along(cmr_module)) {
     data_tmp <- data$structured[i, which.max(data$binary[i, ]):(ntime - which.max(rev(data$binary[i, ])) + 1)]
-    cmr_module[[i]] <- data_tmp
+    history[[i]] <- data_tmp
   }
   
   # calculate unique CMR histories and counts of each
-  unique_cmr_history <- unique(cmr_module)
-  unique_cmr_matrix <- vector('list', length = length(unique_cmr_history))
-  cmr_count <- rep(NA, length = length(unique_cmr_history))
-  for (i in seq_along(unique_cmr_history)) {
-    cmr_count[i] <- sum(sapply(cmr_module, function(x) ifelse(length(x) == length(unique_cmr_history[[i]]),
-                                                           all(x == unique_cmr_history[[i]]),
-                                                           FALSE)))
-    mat_tmp <- c(t(matrix(0, nrow = length(unique_cmr_history[[i]]), ncol = integrated_process$classes)))
-    mat_tmp[seq(1, length(unique_cmr_history[[i]]) * integrated_process$classes,
-                by = integrated_process$classes)[seq_len(length(unique_cmr_history[[i]]))] +
-              ifelse(unique_cmr_history[[i]] == 0, 1, unique_cmr_history[[i]]) - 1] <- unique_cmr_history[[i]]
-    unique_cmr_matrix[[i]] <- matrix(ifelse(mat_tmp > 0, 1, 0), ncol = integrated_process$classes,
-                                     byrow = TRUE)
-  } 
-  cmr_count <- matrix(cmr_count, nrow = 1)
+  unique_history_vec <- unique(history)
+  unique_history <- vector('list', length = length(unique_history_vec))
+  count <- rep(NA, length = length(unique_history_vec))
+  for (i in seq_along(unique_history_vec)) {
+    count[i] <- sum(sapply(history, function(x) ifelse(length(x) == length(unique_history_vec[[i]]),
+                                                       all(x == unique_history_vec[[i]]),
+                                                       FALSE))) 
+    mat_tmp <- c(t(matrix(0, nrow = length(unique_history_vec[[i]]), ncol = integrated_process$classes)))
+    mat_tmp[seq(1, length(unique_history_vec[[i]]) * integrated_process$classes,
+                by = integrated_process$classes)[seq_len(length(unique_history_vec[[i]]))] +
+              ifelse(unique_history_vec[[i]] == 0, 1, unique_history_vec[[i]]) - 1] <- unique_history_vec[[i]]
+    unique_history[[i]] <- matrix(ifelse(mat_tmp > 0, 1, 0), ncol = integrated_process$classes,
+                                  byrow = TRUE)
+  }  
+  count <- matrix(count, nrow = 1)
   
   # define observation matrix
-  capture_probability <- greta::uniform(min = 0.0, max = 1.0,
+  capture_probability <- greta::uniform(min = 0.5, max = 0.9,
                                         dim = c(integrated_process$classes))
-
+  
   # calculate probability of each cmr history
-  cmr_probs <- vector('list', length = integrated_process$replicates)
+  probs <- vector('list', length = integrated_process$replicates)
   for (i in seq_len(integrated_process$replicates)) {
     parameters_tmp <- greta::sweep(integrated_process$parameters$survival[[i]],
                                    2, integrated_process$parameters$survival_vec[[i]], '*')
-    cmr_probs[[i]] <- calculate_history_probability(history = unique_cmr_matrix,
-                                                    capture_probability = capture_probability,
-                                                    parameters = parameters_tmp)
+    probs[[i]] <- calculate_history_probability(history = unique_history,
+                                                capture_probability = capture_probability,
+                                                parameters = parameters_tmp)
   }
   
   # collate outputs
-  cmr_module <- list(history = cmr_module,
-                     unique = unique_cmr_matrix,
+  cmr_module <- list(history = history,
+                     unique = unique_history,
                      capture_probability = capture_probability,
-                     count = cmr_count,
-                     probs = cmr_probs)
+                     count = count,
+                     probs = probs)
 
   cmr_module
   
@@ -609,22 +609,44 @@ op <- greta::.internals$nodes$constructors$op
 # internal function: create greta_array containing probabilities of CMR histories
 calculate_history_probability <- function(history, capture_probability, parameters) {
 
-  n <- length(history)
+  probs <- list()
+  for (i in seq_along(history)) {
     
-  # define tf function
-  dimfun <- function(elem_list) {
-
-    # output dimensions
-    c(n, 1)
+    probs_tmp <- 1
+    for (j in seq_len(nrow(history[[i]]))) {
+      
+      state_vector <- parameters %*% history[[i]][j, ]
+      
+      if (any(history[[i]][j, ] > 0)) {
+        probs_tmp <- probs_tmp * (capture_probability %*% state_vector)
+      } else {
+        probs_tmp <- probs_tmp * ((1 - capture_probability) %*% state_vector)
+      }
+      
+    }
+    
+    probs[[i]] <- probs_tmp
     
   }
-
-  op('calculate_history_probability',
-     capture_probability,
-     parameters,
-     operation_args = list(history = history),
-     tf_operation = 'integrated:::tf_calculate_history_probability',
-     dimfun = dimfun)
+  
+  do.call('c', probs)
+  
+  # n <- length(history)
+  #   
+  # # define tf function
+  # dimfun <- function(elem_list) {
+  # 
+  #   # output dimensions
+  #   c(n, 1)
+  #   
+  # }
+  # 
+  # op('calculate_history_probability',
+  #    capture_probability,
+  #    parameters,
+  #    operation_args = list(history = history),
+  #    tf_operation = 'integrated:::tf_calculate_history_probability',
+  #    dimfun = dimfun)
   
 }
 
