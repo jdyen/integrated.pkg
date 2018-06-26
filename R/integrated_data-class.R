@@ -632,7 +632,7 @@ calculate_history_probability <- function(history, capture_probability, paramete
 tf_calculate_history_probability <- function (capture_probability, parameters, history) {
   
   # loop through histories
-  probs <- rep(0, length(history))
+  probs <- tf$zeros(length(history))
   for (i in seq_along(history)) {
     
     probs_tmp <- tf$constant(1, dtype = tf$float32)
