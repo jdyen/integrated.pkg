@@ -158,15 +158,31 @@ define_integrated_data <- function (data,
   
   if (process_link == 'mark_recapture') {
     
-    # check data format
-    if (!('size' %in% colnames(data))) {
-      stop('mark_recapture models require size measurements at each recapture',
-           call. = FALSE)
+    # turn data into a list and check that each element has the correct columns
+    if (is.matrix(data) | is.data.frame(data)) {
+      
+      data <- list(data)
+      
+    } else {
+      
+      if (!is.list(data)) {
+        stop('mark_recapture data must be a matrix, data.frame, or list of matrices or data.frames',
+             call. = FALSE) 
+      }
+      
     }
-    
-    if (!all(c('size', 'id', 'time') %in% colnames(data))) {
-      stop('mark_recapture data should be in long format with size, id, and time columns',
-           call. = FALSE)
+
+    # check data format
+    for (i in seq_along(data)) {
+      if (!('size' %in% colnames(data[[i]]))) {
+        stop('mark_recapture models require size measurements at each recapture',
+             call. = FALSE)
+      }
+      
+      if (!all(c('size', 'id', 'time') %in% colnames(data[[i]]))) { 
+        stop('mark_recapture data should be in long format with size, id, and time columns',
+             call. = FALSE)
+      }
     }
     
     # create capture histories (binary and structured)
@@ -178,25 +194,26 @@ define_integrated_data <- function (data,
     data_module <- define_mark_recapture_module(data = data,
                                                 integrated_process = integrated_process, 
                                                 observation_model = observation_model)
+    
   }  
   
   if (process_link == 'population_abundance') {
     data_module <- define_population_abundance_module(data = data,
-                                           integrated_process = integrated_process, 
-                                           observation_model = observation_model)
-  }   
+                                                      integrated_process = integrated_process, 
+                                                      observation_model = observation_model)
+  }    
   
   if (process_link == 'population_biomass') {
     data_module <- define_population_biomass_module(data = data,
-                                         integrated_process = integrated_process, 
-                                         observation_model = observation_model)
-  }   
+                                                    integrated_process = integrated_process, 
+                                                    observation_model = observation_model)
+  }    
   
   if (process_link == 'community') {
     data_module <- define_community_module(data = data,
                                            integrated_process = integrated_process, 
                                            observation_model = observation_model)
-  }   
+  }    
   
   data_module <- list(data_module = data_module,
                       data = data,
@@ -341,44 +358,75 @@ define_abundance_module <- function (data, integrated_process, observation_model
 # internal function: build mark-recapture data module
 define_mark_recapture_module <- function (data, integrated_process, observation_model) {
   
-  # reduce capture histories to a list without pre/post capture information
-  history <- vector('list', length = nrow(data$structured))
-  ntime <- ncol(data$structured)
-  for (i in seq_along(history)) {
-    data_tmp <- data$structured[i, which.max(data$binary[i, ]):(ntime - which.max(rev(data$binary[i, ])) + 1)]
-    history[[i]] <- data_tmp
-  }
+  history <- vector('list', length = length(data))
+  unique_history <- vector('list', length = length(data))
+  count <- vector('list', length = length(data))
   
-  # calculate unique CMR histories and counts of each
-  unique_history_vec <- unique(history)
-  unique_history <- vector('list', length = length(unique_history_vec))
-  count <- rep(NA, length = length(unique_history_vec))
-  for (i in seq_along(unique_history_vec)) {
-    count[i] <- sum(sapply(history, function(x) ifelse(length(x) == length(unique_history_vec[[i]]),
-                                                       all(x == unique_history_vec[[i]]),
-                                                       FALSE))) 
-    mat_tmp <- c(t(matrix(0, nrow = length(unique_history_vec[[i]]), ncol = integrated_process$classes)))
-    mat_tmp[seq(1, length(unique_history_vec[[i]]) * integrated_process$classes,
-                by = integrated_process$classes)[seq_len(length(unique_history_vec[[i]]))] +
-              ifelse(unique_history_vec[[i]] == 0, 1, unique_history_vec[[i]]) - 1] <- unique_history_vec[[i]]
-    unique_history[[i]] <- matrix(ifelse(mat_tmp > 0, 1, 0), ncol = integrated_process$classes,
-                                  byrow = TRUE)
-  }  
-  count <- matrix(count, nrow = 1)
-  
-  # define observation matrix
-  capture_probability <- greta::uniform(min = 0.5, max = 0.9,
-                                        dim = c(1, integrated_process$classes))
-   
-  # calculate probability of each cmr history
-  probs <- vector('list', length = integrated_process$replicates)
-  for (i in seq_len(integrated_process$replicates)) {
-    parameters_tmp <- greta::sweep(integrated_process$parameters$survival[[i]],
-                                   2, integrated_process$parameters$survival_vec[[i]], '*')
-    probs[[i]] <- calculate_history_probability(history = unique_history,
-                                                capture_probability = capture_probability,
-                                                parameters = parameters_tmp)
+  for (i in seq_along(data)) {
+    
+    # reduce capture histories to a list without pre/post capture information
+    history[[i]] <- vector('list', length = nrow(data[[i]]$structured))
+    ntime <- ncol(data[[i]]$structured)
+    for (j in seq_along(history[[i]])) {
+      data_tmp <- data[[i]]$structured[j, which.max(data$[[i]]binary[j, ]):(ntime - which.max(rev(data[[i]]$binary[j, ])) + 1)]
+      history[[i]][[j]] <- data_tmp
+    }
+    
+    # calculate unique CMR histories and counts of each
+    unique_history_vec <- unique(history[[i]])
+    unique_history[[i]] <- vector('list', length = length(unique_history_vec))
+    count[[i]] <- rep(NA, length = length(unique_history_vec))
+    for (j in seq_along(unique_history_vec)) {
+      count[j] <- sum(sapply(history[[i]], function(x) ifelse(length(x) == length(unique_history_vec[[j]]),
+                                                              all(x == unique_history_vec[[j]]),
+                                                              FALSE))) 
+      mat_tmp <- c(t(matrix(0, nrow = length(unique_history_vec[[j]]), ncol = integrated_process$classes)))
+      mat_tmp[seq(1, length(unique_history_vec[[j]]) * integrated_process$classes,
+                  by = integrated_process$classes)[seq_len(length(unique_history_vec[[j]]))] +
+                ifelse(unique_history_vec[[j]] == 0, 1, unique_history_vec[[j]]) - 1] <- unique_history_vec[[j]]
+      unique_history[[i]][[j]] <- matrix(ifelse(mat_tmp > 0, 1, 0), ncol = integrated_process$classes,
+                                         byrow = TRUE)
+    }   
+    count[[i]] <- matrix(count[[i]], nrow = 1)
+    
   } 
+  
+  # initialise main outputs
+  probs <- vector('list', length = length(data))
+  
+  # use separate process models if they exist
+  if (integrated_process$replicates > 1) {
+    
+    capture_probability <- vector('list', length = length(data))
+    for (i in seq_along(integrated_process$replicate_id)) {
+      
+      # define observation matrix
+      capture_probability[[i]] <- greta::uniform(min = 0.5, max = 0.9,
+                                                 dim = c(1, integrated_process$classes))
+      probs[[i]] <- calculate_history_probability(history = unique_history[[i]],
+                                                  capture_probability = capture_probability[[i]],
+                                                  parameters = greta::sweep(integrated_process$parameters$survival[[integrated_process$replicate_id[i]]],
+                                                                            2, integrated_process$parameters$survival_vec[[integrated_process$replicate_id[i]]], '*'))
+      
+    }
+    
+  } else {
+    
+    # just a single set of parameters
+    capture_probability <- list(greta::uniform(min = 0.5, max = 0.9,
+                                               dim = c(1, integrated_process$classes)))
+    
+    # fit all elements of data to the same process model
+    for (i in seq_along(data)) {
+      
+      probs[[i]] <- calculate_history_probability(history = unique_history[[i]],
+                                                  capture_probability = capture_probability[[1]],
+                                                  parameters = greta::sweep(integrated_process$parameters$survival[[1]],
+                                                                            2, integrated_process$parameters$survival_vec[[1]], '*'))
+      
+    }
+    
+  }
   
   # collate outputs
   cmr_module <- list(history = history,
