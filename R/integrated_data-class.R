@@ -632,7 +632,7 @@ calculate_history_probability <- function(history, capture_probability, paramete
 tf_calculate_history_probability <- function (capture_probability, parameters, history) {
   
   # loop through histories
-  probs <- tf$zeros(length(history))
+  probs <- list()
   for (i in seq_along(history)) {
     
     probs_tmp <- tf$constant(1, dtype = tf$float32)
@@ -654,10 +654,10 @@ tf_calculate_history_probability <- function (capture_probability, parameters, h
       }
     }
     
-    probs[i] <- probs_tmp
+    probs[[i]] <- probs_tmp
     
   } 
   
-  probs
-   
+  do.call(greta::.internals$tensors$tf_cbind, probs)
+  
 }
