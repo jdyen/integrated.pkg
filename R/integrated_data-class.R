@@ -9,10 +9,16 @@
 #' @param integrated_process something
 #' @param process_link something
 #' @param observation_model something else
+#' @param settings a named list of settings passed to data formatting functions (see details)
 #' @param ... additional arguments
 #'
 #' @return An object of class \code{integrated_data}, which contains information on the data module and
 #'   can be passed to a \link[integrated]{integrated_model}
+#' 
+#' @details Do something. The settings list can be used to specify how the data are binned, either with
+#'   specific breaks for binning or with the number of breaks to use. If these are not provided, the 
+#'   functions use the \code{classes} argument in the \code{integrated_process} to determine the number
+#'   of bins (\code{nbreaks = classes + 1}).
 #' 
 #' @export
 #' 
@@ -150,19 +156,37 @@ define_integrated_data <- function (data,
   }  
   
   if (process_link == 'mark_recapture') {
+    
+    # check data format
+    if (!('size' %in% colnames(data))) {
+      stop('mark_recapture models require size measurements at each recapture',
+           call. = FALSE)
+    }
+    
+    if (!all(c('size', 'id', 'time') %in% colnames(data))) {
+      stop('mark_recapture data should be in long format with size, id, and time columns',
+           call. = FALSE)
+    }
+    
+    # create capture histories (binary and structured)
+    data <- calculate_capture_history(data = data,
+                                      classes = integrated_process$classes,
+                                      settings = settings)
+    
+    # create data module
     data_module <- define_mark_recapture_module(data = data,
                                                 integrated_process = integrated_process, 
                                                 observation_model = observation_model)
   }  
   
-  if (process_link == 'size_abundance') {
-    data_module <- define_size_abundance_module(data = data,
-                                                integrated_process = integrated_process, 
-                                                observation_model = observation_model)
+  if (process_link == 'population_abundance') {
+    data_module <- define_population_abundance_module(data = data,
+                                           integrated_process = integrated_process, 
+                                           observation_model = observation_model)
   }   
   
-  if (process_link == 'biomass') {
-    data_module <- define_biomass_module(data = data,
+  if (process_link == 'population_biomass') {
+    data_module <- define_population_biomass_module(data = data,
                                          integrated_process = integrated_process, 
                                          observation_model = observation_model)
   }   
@@ -316,12 +340,18 @@ define_abundance_module <- function (data, integrated_process, observation_model
 # internal function: build mark-recapture data module
 define_mark_recapture_module <- function (data, integrated_process, observation_model) {
   
-  NULL
+  # calulate possible capture histories
+  capture_histories <- NULL
+
+  # count number of individuals with each capture history  
+  cmr_module <- NULL
+
+  cmr_module
   
 }
 
-# internal function: build size-abundance data module
-define_size_abundance_module <- function (data, integrated_process, observation_model) {
+# internal function: build population abundance data module
+define_population_abundance_module <- function (data, integrated_process, observation_model) {
   
   data_module <- NULL
   
@@ -329,8 +359,8 @@ define_size_abundance_module <- function (data, integrated_process, observation_
   
 }
 
-# internal function: build biomass data module
-define_biomass_module <- function (data, integrated_process, observation_model) {
+# internal function: build population biomass data module
+define_population_biomass_module <- function (data, integrated_process, observation_model) {
   
   data_module <- NULL
   
@@ -426,7 +456,7 @@ make_pop_data_matrix <- function(data, classes, settings) {
     if (is.null(matrix_set$nbreaks)) {
       matrix_set$nbreaks <- classes + 1
     }
-    break_set <- c(0, quantile(data_clean$size_now,
+    break_set <- c(0, quantile(data$size,
                                p = seq(0.1, 0.9, length = (matrix_set$nbreaks - 2))), 1)
   } else {
     break_set <- matrix_set$breaks
@@ -495,7 +525,7 @@ calculate_capture_history <- function(data, classes, settings) {
     
     # calculate size at each recapture
     size_tmp <- tapply(data_sub$size, data_sub$time, mean)
-    size_history[i, times %in% names(time_tmp)] <- size_tmp 
+    size_history[i, times %in% names(size_tmp)] <- size_tmp 
     
   }
   
@@ -504,7 +534,7 @@ calculate_capture_history <- function(data, classes, settings) {
     if (is.null(matrix_set$nbreaks)) {
       matrix_set$nbreaks <- classes + 1
     }
-    break_set <- c(0, quantile(data_clean$size_now,
+    break_set <- c(0, quantile(data$size,
                                p = seq(0.1, 0.9, length = (matrix_set$nbreaks - 2))), 1)
   } else {
     break_set <- matrix_set$breaks
@@ -518,6 +548,17 @@ calculate_capture_history <- function(data, classes, settings) {
     }
   }
   
+  # put the size history into categories based on breaks
+  size_history_binned <- matrix(cut(size_history, breaks = break_set, labels = FALSE),
+                                ncol = ncol(capture_history))
+  size_history_binned <- ifelse(is.na(size_history_binned), 0, size_history_binned)
+  
+  # collate outputs
+  capture_history <- list(binary = capture_history,
+                          structured = size_history_binned)
+  
+  # return outputs
+  capture_history
   
 }
 
