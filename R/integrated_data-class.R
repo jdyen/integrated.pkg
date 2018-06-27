@@ -377,9 +377,9 @@ define_mark_recapture_module <- function (data, integrated_process, observation_
     unique_history[[i]] <- vector('list', length = length(unique_history_vec))
     count[[i]] <- rep(NA, length = length(unique_history_vec))
     for (j in seq_along(unique_history_vec)) {
-      count[j] <- sum(sapply(history[[i]], function(x) ifelse(length(x) == length(unique_history_vec[[j]]),
-                                                              all(x == unique_history_vec[[j]]),
-                                                              FALSE))) 
+      count[[i]][j] <- sum(sapply(history[[i]], function(x) ifelse(length(x) == length(unique_history_vec[[j]]),
+                                                                   all(x == unique_history_vec[[j]]),
+                                                                   FALSE))) 
       mat_tmp <- c(t(matrix(0, nrow = length(unique_history_vec[[j]]), ncol = integrated_process$classes)))
       mat_tmp[seq(1, length(unique_history_vec[[j]]) * integrated_process$classes,
                   by = integrated_process$classes)[seq_len(length(unique_history_vec[[j]]))] +
