@@ -459,12 +459,12 @@ define_stage_recapture_module <- function (data, integrated_process, observation
     # fit all elements of data to the same process model
     for (i in seq_along(data)) {
       
-      probs[[i]] <- calculate_history_probability(history = unique_history[[i]],
-                                                  capture_probability = integrated_process$parameters$capture_probability[[1]],
-                                                  parameters = greta::sweep(integrated_process$parameters$survival[[1]],
-                                                                            2, integrated_process$parameters$survival_vec[[1]], '*'))
+      probs[[i]] <- calculate_history_probability_v2(history = unique_history[[i]],
+                                                     capture_probability = integrated_process$parameters$capture_probability[[1]],
+                                                     parameters = greta::sweep(integrated_process$parameters$survival[[1]],
+                                                                               2, integrated_process$parameters$survival_vec[[1]], '*'))
       
-    }
+    } 
     
   }
   
@@ -713,6 +713,30 @@ calculate_history_probability <- function(history, capture_probability, paramete
   id_vec <- rep(seq_along(history),
                 times = sapply(history, function(x) nrow(x) * ncol(x)))
   probs <- greta::tapply(c(state_vector)[nonzero_cells], id_vec[nonzero_cells], 'prod')
+  
+  probs
+  
+}
+
+# internal function: create greta_array containing probabilities of CMR histories
+calculate_history_probability_v2 <- function(history, capture_probability, parameters) {
+  
+  probs <- list()
+  for (i in seq_along(history)) {
+
+    observed <- apply(history[[i]], 1, function(x) any(x != 0))    
+    state_vector <- parameters %*% t(history[[i]][seq_len(nrow(history[[i]]) - 1), ])
+    
+    state_vector[, observed] <- greta::sweep(state_vector[, observed],
+                                             1, capture_probability, '*')
+    state_vector[, !observed] <- greta::sweep(state_vector[, !observed],
+                                              1, (1 - capture_probability), '*')
+    
+    probs[[i]] <- history[[i]][nrow(history[[i]]), ] %*% state_vector
+    
+  } 
+
+  probs <- do.call('c', probs)
   
   probs
   
