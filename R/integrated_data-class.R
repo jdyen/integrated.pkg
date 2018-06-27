@@ -722,50 +722,36 @@ calculate_history_probability <- function(history, capture_probability, paramete
 calculate_history_probability_v2 <- function(history, capture_probability, parameters) {
   
   nrows <- sapply(history, nrow)
-  id_vec <- rep(seq_len(ncol(parameters)), times = max(nrows))
+
+  history_mat <- do.call('rbind', history)
+    
+  end_index <- cumsum(nrows)
+  start_mat <- history_mat[-end_index, ]
+  end_mat <- history_mat[end_index, ]
   
-  probs <- list()
-  for (i in seq_along(history)) {
-    
-    if (nrows[i] > 2) {
-      
-      observed <- apply(history[[i]][seq_len(nrows[i] - 1), ],
-                        1, function(x) any(x != 0))
-      
-      state_vector <- parameters %*% t(history[[i]][seq_len(nrows[i] - 1), ])
-      
-      state_vector[, observed] <- greta::sweep(state_vector[, observed],
-                                               1, capture_probability, '*')
-      
-      state_vector[, !observed] <- greta::sweep((state_vector[, !observed] + 1),
-                                                1, (1 - capture_probability), '*')
-      
-      vector_prod <- greta::tapply(c(state_vector),
-                                   id_vec[seq_len((nrows[i] - 1) * ncol(parameters))],
-                                   'prod')
-      
-      probs[[i]] <- t(history[[i]][nrows[i], ]) %*% vector_prod
-      
-    } else { 
-      
-      if (nrows[i] == 2) {
+  observed <- apply(start_mat, 1, function(x) any(x != 0))
+  
+  state_vec <- parameters %*% greta::as_data(t(start_mat))
+  state_vec[, observed] <- greta::sweep(state_vec[, observed],
+                                        1, capture_probability, '*')
+  state_vec[, !observed] <- greta::sweep(state_vec[, !observed],
+                                        1, (1 - capture_probability), '*')
 
-        state_vector <- capture_probability * (parameters %*% history[[i]][1, ])
-
-        probs[[i]] <- t(history[[i]][nrows[i], ]) %*% state_vector
-        
-      } else {
-        
-        probs[[i]] <- history[[i]] %*% capture_probability
-        
-      }
-      
-    } 
-    
-  } 
-
-  probs <- do.call('c', probs)
+  id_vec <- rep(seq_len(ncol(parameters)), times = nrow(start_mat)) +
+    rep(seq(from = 0, to = (ncol(parameters) * length(history) - 1), by = ncol(parameters)),
+        times = sapply(history, function(x) ncol(x) * (nrow(x) - 1)))
+  
+  ## HAVE LOST A 6-row MATRIX FROM THIS?? (6 single rows, it's the single row histories
+  #   lost in prev id_vec with (nrow(x) - 1))
+  vector_prod <- greta::tapply(c(state_vec), id_vec, 'prod')
+  
+  state_vec <- vector_prod * end_mat
+  
+  id_vec <- rep(seq_along(history),
+                each = ncol(parameters))
+  
+  probs <- greta::tapply(c(state_vec), id_vec, 'prod')
   
   probs
-  
+
 }
