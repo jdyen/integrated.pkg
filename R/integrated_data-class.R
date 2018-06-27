@@ -722,6 +722,7 @@ calculate_history_probability <- function(history, capture_probability, paramete
 calculate_history_probability_v2 <- function(history, capture_probability, parameters) {
   
   nrows <- sapply(history, nrow)
+  id_vec <- rep(seq_len(ncol(parameters)), times = max(nrows))
   
   probs <- list()
   for (i in seq_along(history)) {
@@ -737,7 +738,11 @@ calculate_history_probability_v2 <- function(history, capture_probability, param
     state_vector[, !observed] <- greta::sweep(state_vector[, !observed],
                                               1, (1 - capture_probability), '*')
     
-    probs[[i]] <- history[[i]][nrows[i], ] %*% state_vector
+    vector_prod <- greta::tapply(c(state_vector),
+                                 id_vec[seq_len(nrows[i] * ncol(parameters))],
+                                 'prod')
+    
+    probs[[i]] <- t(history[[i]][nrows[i], ]) %*% vector_prod
     
   } 
 
