@@ -368,7 +368,7 @@ define_mark_recapture_module <- function (data, integrated_process, observation_
     history[[i]] <- vector('list', length = nrow(data[[i]]$structured))
     ntime <- ncol(data[[i]]$structured)
     for (j in seq_along(history[[i]])) {
-      data_tmp <- data[[i]]$structured[j, which.max(data$[[i]]binary[j, ]):(ntime - which.max(rev(data[[i]]$binary[j, ])) + 1)]
+      data_tmp <- data[[i]]$structured[j, which.max(data[[i]]$binary[j, ]):(ntime - which.max(rev(data[[i]]$binary[j, ])) + 1)]
       history[[i]][[j]] <- data_tmp
     }
     
