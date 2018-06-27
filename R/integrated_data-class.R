@@ -750,7 +750,7 @@ calculate_history_probability_v2 <- function(history, capture_probability, param
       
       if (nrows[i] == 2) {
 
-        state_vector <- capture_probability * (parameters %*% t(history[[i]][1, ]))
+        state_vector <- capture_probability * (parameters %*% history[[i]][1, ])
 
         probs[[i]] <- t(history[[i]][nrows[i], ]) %*% state_vector
         
