@@ -581,70 +581,75 @@ calculate_capture_history <- function(data, classes, settings) {
                      breaks = NULL)
   matrix_set[names(settings)] <- settings
   
-  # remove NAs in fish IDs
-  if (any(is.na(data$id))) {
-    data <- data[!is.na(data$id), ]
-  }
-  
-  # work out how many times each tagged fish was captured
-  recaptures <- tapply(rep(1, nrow(data)), data$id, sum)
-  
-  # filter to fish that were recaptured at least once
-  recaptures <- recaptures[recaptures > 1]
-  
-  # pull out the sample dates (years at this stage; go to season/month perhaps)
-  times <- sort(unique(data$time))
-  
-  # prepare an output matrix with one row for each fish captured more than once
-  capture_history <- matrix(NA, nrow = length(recaptures), ncol = length(times))
-  size_history <- matrix(NA, nrow = length(recaptures), ncol = length(times))
-  
-  # add sample dates and fishids to output matrix
-  colnames(capture_history) <- colnames(size_history) <- times
-  rownames(capture_history) <- rownames(size_history) <- names(recaptures)
-  
-  # for each fish, work out which years it was caught
-  for (i in seq_along(recaptures)) {
+  capture_history <- vector('list', length = length(data))
+  for (i in seq_along(data)) {
     
-    # subset data to a single fish
-    data_sub <- data[data$id == names(recaptures)[i], ]
-    
-    # calculate capture history
-    capture_history[i, ] <- ifelse(times %in% data_sub$time, 1, 0)
-    
-    # calculate size at each recapture
-    size_tmp <- tapply(data_sub$size, data_sub$time, mean)
-    size_history[i, times %in% names(size_tmp)] <- size_tmp 
-    
-  }
-  
-  # calculate breaks
-  if (is.null(matrix_set$breaks)) {
-    if (is.null(matrix_set$nbreaks)) {
-      matrix_set$nbreaks <- classes + 1
+    # remove NAs in fish IDs
+    if (any(is.na(data[[i]]$id))) {
+      data[[i]] <- data[[i]][!is.na(data[[i]]$id), ]
     }
-    break_set <- c(0, quantile(data$size,
-                               p = seq(0.1, 0.9, length = (matrix_set$nbreaks - 2))), 1)
-  } else {
-    break_set <- matrix_set$breaks
-    if (is.null(matrix_set$nbreaks)) {
-      matrix_set$nbreaks <- length(break_set)
+    
+    # work out how many times each tagged fish was captured
+    recaptures <- tapply(rep(1, nrow(data[[i]])), data[[i]]$id, sum)
+    
+    # filter to fish that were recaptured at least once
+    recaptures <- recaptures[recaptures > 1]
+    
+    # pull out the sample dates (years at this stage; go to season/month perhaps)
+    times <- sort(unique(data[[i]]$time))
+    
+    # prepare an output matrix with one row for each fish captured more than once
+    capture_history <- matrix(NA, nrow = length(recaptures), ncol = length(times))
+    size_history <- matrix(NA, nrow = length(recaptures), ncol = length(times))
+    
+    # add sample dates and fishids to output matrix
+    colnames(capture_history) <- colnames(size_history) <- times
+    rownames(capture_history) <- rownames(size_history) <- names(recaptures)
+    
+    # for each fish, work out which years it was caught
+    for (j in seq_along(recaptures)) {
+      
+      # subset data to a single fish
+      data_sub <- data[[i]][data[[i]]$id == names(recaptures)[j], ]
+      
+      # calculate capture history
+      capture_history[j, ] <- ifelse(times %in% data_sub$time, 1, 0)
+      
+      # calculate size at each recapture
+      size_tmp <- tapply(data_sub$size, data_sub$time, mean)
+      size_history[j, times %in% names(size_tmp)] <- size_tmp 
+      
     }
-    if (matrix_set$nbreaks != length(break_set)) {
-      stop(paste0(length(break_set), ' breaks have been specified but nbreaks = ',
-                  matrix_set$nbreaks),
-           call. = FALSE)
+    
+    # calculate breaks
+    if (is.null(matrix_set$breaks)) {
+      if (is.null(matrix_set$nbreaks)) {
+        matrix_set$nbreaks <- classes + 1
+      }
+      break_set <- c(0, quantile(data[[i]]$size,
+                                 p = seq(0.1, 0.9, length = (matrix_set$nbreaks - 2))), 1)
+    } else {
+      break_set <- matrix_set$breaks
+      if (is.null(matrix_set$nbreaks)) {
+        matrix_set$nbreaks <- length(break_set)
+      }
+      if (matrix_set$nbreaks != length(break_set)) {
+        stop(paste0(length(break_set), ' breaks have been specified but nbreaks = ',
+                    matrix_set$nbreaks),
+             call. = FALSE)
+      }
     }
+    
+    # put the size history into categories based on breaks
+    size_history_binned <- matrix(cut(size_history, breaks = break_set, labels = FALSE),
+                                  ncol = ncol(capture_history))
+    size_history_binned <- ifelse(is.na(size_history_binned), 0, size_history_binned)
+    
+    # collate outputs
+    capture_history[[i]] <- list(binary = capture_history,
+                            structured = size_history_binned)
+    
   }
-  
-  # put the size history into categories based on breaks
-  size_history_binned <- matrix(cut(size_history, breaks = break_set, labels = FALSE),
-                                ncol = ncol(capture_history))
-  size_history_binned <- ifelse(is.na(size_history_binned), 0, size_history_binned)
-  
-  # collate outputs
-  capture_history <- list(binary = capture_history,
-                          structured = size_history_binned)
   
   # return outputs
   capture_history
