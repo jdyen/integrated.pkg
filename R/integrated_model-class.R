@@ -40,7 +40,7 @@ build_integrated_model <- function (integrated_process, ...) {
            call. = FALSE)
     }
     
-    if (data_tmp$process_link == 'abundance') {
+    if (data_tmp$process_link == 'stage_abundance') {
       
       # it's easy if data and process contain the same number of stages
       if (all(integrated_process$classes == sapply(data_tmp$data, nrow))) {
@@ -85,7 +85,7 @@ build_integrated_model <- function (integrated_process, ...) {
       
     }
     
-    if (data_tmp$process_link == 'growth') {
+    if (data_tmp$process_link == 'individual_growth') {
       
       # if there is more than one observed data set
       for (i in seq_along(data_tmp$data_module)) {
@@ -117,7 +117,7 @@ build_integrated_model <- function (integrated_process, ...) {
       
     }
     
-    if (data_tmp$process_link == 'mark_recapture') {
+    if (data_tmp$process_link == 'stage_recapture') {
       
       for (i in seq_along(data_tmp$data_module$count)) {
         
