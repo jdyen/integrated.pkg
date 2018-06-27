@@ -651,9 +651,10 @@ calculate_capture_history <- function(data, classes, settings) {
 # internal function: create greta_array containing probabilities of CMR histories
 calculate_history_probability <- function(history, capture_probability, parameters) {
 
-  history_mat <- greta::as_data(do.call('rbind', history))
+  history_mat <- do.call('rbind', history)
 
   nonzero_cells <- c(t(history_mat) > 0)
+  
   observed <- apply(history_mat, 1, function(x) any(x != 0))
   
   state_vector <- parameters %*% t(history_mat)
