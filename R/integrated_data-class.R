@@ -653,6 +653,7 @@ calculate_history_probability <- function(history, capture_probability, paramete
 
   history_mat <- greta::as_data(do.call('rbind', history))
 
+  nonzero_cells <- c(t(history_mat) > 0)
   observed <- apply(history_mat, 1, function(x) any(x != 0))
   
   state_vector <- parameters %*% t(history_mat)
@@ -664,6 +665,8 @@ calculate_history_probability <- function(history, capture_probability, paramete
   
   id_vec <- rep(seq_along(history),
                 times = sapply(history, function(x) nrow(x) * ncol(x)))
-  probs <- greta::tapply(c(state_vector), id_vec, 'prod')
+  probs <- greta::tapply(c(state_vector)[nonzero_cells], id_vec[nonzero_cells], 'prod')
+  
+  probs
   
 }
