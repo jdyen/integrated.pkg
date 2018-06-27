@@ -721,18 +721,23 @@ calculate_history_probability <- function(history, capture_probability, paramete
 # internal function: create greta_array containing probabilities of CMR histories
 calculate_history_probability_v2 <- function(history, capture_probability, parameters) {
   
+  nrows <- sapply(history, nrow)
+  
   probs <- list()
   for (i in seq_along(history)) {
 
-    observed <- apply(history[[i]], 1, function(x) any(x != 0))    
-    state_vector <- parameters %*% t(history[[i]][seq_len(nrow(history[[i]]) - 1), ])
+    observed <- apply(history[[i]][seq_len(nrows[i] - 1), ],
+                      1, function(x) any(x != 0))
+    
+    state_vector <- parameters %*% t(history[[i]][seq_len(nrows[i] - 1), ])
     
     state_vector[, observed] <- greta::sweep(state_vector[, observed],
                                              1, capture_probability, '*')
+    
     state_vector[, !observed] <- greta::sweep(state_vector[, !observed],
                                               1, (1 - capture_probability), '*')
     
-    probs[[i]] <- history[[i]][nrow(history[[i]]), ] %*% state_vector
+    probs[[i]] <- history[[i]][nrows[i], ] %*% state_vector
     
   } 
 
