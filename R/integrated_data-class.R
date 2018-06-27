@@ -414,7 +414,7 @@ define_mark_recapture_module <- function (data, integrated_process, observation_
     
     # just a single set of parameters
     capture_probability <- list(greta::uniform(min = 0.5, max = 0.9,
-                                               dim = c(1, integrated_process$classes)))
+                                               dim = c(integrated_process$classes, 1)))
     
     # fit all elements of data to the same process model
     for (i in seq_along(data)) {
@@ -651,83 +651,22 @@ calculate_capture_history <- function(data, classes, settings) {
   
 }
 
-# greta internal function: define tf operation
-op <- greta::.internals$nodes$constructors$op
-
 # internal function: create greta_array containing probabilities of CMR histories
 calculate_history_probability <- function(history, capture_probability, parameters) {
 
-  probs <- list()
-  for (i in seq_along(history)) {
-    
-    probs_tmp <- 1
-    for (j in seq_len(nrow(history[[i]]))) {
-      
-      state_vector <- parameters %*% history[[i]][j, ]
-      
-      if (any(history[[i]][j, ] > 0)) {
-        probs_tmp <- probs_tmp * (capture_probability %*% state_vector)
-      } else {
-        probs_tmp <- probs_tmp * ((1 - capture_probability) %*% state_vector)
-      }
-      
-    }
-    
-    probs[[i]] <- probs_tmp
-    
-  }
-  
-  do.call('c', probs)
-  
-  # n <- length(history)
-  #   
-  # # define tf function
-  # dimfun <- function(elem_list) {
-  # 
-  #   # output dimensions
-  #   c(n, 1)
-  #   
-  # }
-  # 
-  # op('calculate_history_probability',
-  #    capture_probability,
-  #    parameters,
-  #    operation_args = list(history = history),
-  #    tf_operation = 'integrated:::tf_calculate_history_probability',
-  #    dimfun = dimfun)
-  
-}
+  history_mat <- greta::as_data(do.call('rbind', history))
 
-# internal: tensorflow function to calculate probabilities of CMR histories
-tf_calculate_history_probability <- function (capture_probability, parameters, history) {
+  observed <- apply(history_mat, 1, function(x) any(x != 0))
   
-  # loop through histories
-  probs <- list()
-  for (i in seq_along(history)) {
-    
-    probs_tmp <- tf$constant(1, dtype = tf$float32)
-    for (j in seq_len(nrow(history[[i]]))) {
-      
-      state_vector <- tf$matmul(parameters, tf$expand_dims(history[[i]][j, ], axis = 0L),
-                                transpose_a = FALSE, transpose_b = TRUE)
-      
-      if (sum(history[[i]][j, ]) > 0) {
-        
-        probs_tmp <- tf$multiply(probs_tmp, tf$reduce_prod(tf$multiply(capture_probability, state_vector)))
-        
-      } else {
-        
-        probs_tmp <- tf$multiply(probs_tmp,
-                                 tf$reduce_prod(tf$multiply(tf$subtract(tf$constant(1, dtype = tf$float32), capture_probability),
-                                                            state_vector)))
-        
-      }
-    }
-    
-    probs[[i]] <- probs_tmp
-    
-  } 
+  state_vector <- parameters %*% t(history_mat)
   
-  do.call('c', probs)
+  state_vector[, observed] <- greta::sweep(state_vector[, observed],
+                                           1, capture_probability, '*')
+  state_vector[, !observed] <- greta::sweep(state_vector[, !observed],
+                                            1, (1 - capture_probability), '*')
+  
+  id_vec <- rep(seq_along(history),
+                times = sapply(history, function(x) nrow(x) * ncol(x)))
+  probs <- greta::tapply(c(state_vector), id_vec, 'prod')
   
 }
