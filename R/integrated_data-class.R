@@ -599,12 +599,12 @@ calculate_capture_history <- function(data, classes, settings) {
     times <- sort(unique(data[[i]]$time))
     
     # prepare an output matrix with one row for each fish captured more than once
-    capture_history <- matrix(NA, nrow = length(recaptures), ncol = length(times))
+    capture_history_tmp <- matrix(NA, nrow = length(recaptures), ncol = length(times))
     size_history <- matrix(NA, nrow = length(recaptures), ncol = length(times))
     
     # add sample dates and fishids to output matrix
-    colnames(capture_history) <- colnames(size_history) <- times
-    rownames(capture_history) <- rownames(size_history) <- names(recaptures)
+    colnames(capture_history_tmp) <- colnames(size_history) <- times
+    rownames(capture_history_tmp) <- rownames(size_history) <- names(recaptures)
     
     # for each fish, work out which years it was caught
     for (j in seq_along(recaptures)) {
@@ -613,7 +613,7 @@ calculate_capture_history <- function(data, classes, settings) {
       data_sub <- data[[i]][data[[i]]$id == names(recaptures)[j], ]
       
       # calculate capture history
-      capture_history[j, ] <- ifelse(times %in% data_sub$time, 1, 0)
+      capture_history_tmp[j, ] <- ifelse(times %in% data_sub$time, 1, 0)
       
       # calculate size at each recapture
       size_tmp <- tapply(data_sub$size, data_sub$time, mean)
@@ -642,12 +642,12 @@ calculate_capture_history <- function(data, classes, settings) {
     
     # put the size history into categories based on breaks
     size_history_binned <- matrix(cut(size_history, breaks = break_set, labels = FALSE),
-                                  ncol = ncol(capture_history))
+                                  ncol = ncol(capture_history_tmp))
     size_history_binned <- ifelse(is.na(size_history_binned), 0, size_history_binned)
     
     # collate outputs
-    capture_history[[i]] <- list(binary = capture_history,
-                            structured = size_history_binned)
+    capture_history[[i]] <- list(binary = capture_history_tmp,
+                                 structured = size_history_binned)
     
   }
   
