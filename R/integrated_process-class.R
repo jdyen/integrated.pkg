@@ -53,7 +53,9 @@ define_integrated_process <- function (type, classes,
   params_list <- list(fec_lower = 0,
                       fec_upper = 1000,
                       density_lower = 0,
-                      density_upper = 5)
+                      density_upper = 5,
+                      capture_lower = 0.25,
+                      capture_upper = 0.9)
   params_list[names(params)] <- params
   
   if (type == 'IPM') {
@@ -74,6 +76,10 @@ define_integrated_process <- function (type, classes,
     parameters$density_parameter <- greta::uniform(min = params_list$density_lower,
                                                    max = params_list$density_upper, dim = 1)
 
+    parameters$capture_probability <- lapply(seq_len(replicates),
+                                             function(i) greta::uniform(min = params_list$capture_lower,
+                                                                        max = params_list$capture_upper,
+                                                                        dim = c(1, classes)))
     structure <- 'IPM'
 
   }
@@ -94,6 +100,11 @@ define_integrated_process <- function (type, classes,
     parameters$fecundity <- lapply(seq_len(replicates), function(i) params[[i]]$fecundity) 
     parameters$density_parameter <- greta::uniform(min = params_list$density_lower,
                                                    max = params_list$density_upper, dim = 1)
+    parameters$capture_probability <- lapply(seq_len(replicates),
+                                             function(i) greta::uniform(min = params_list$capture_lower,
+                                                                        max = params_list$capture_upper,
+                                                                        dim = c(1, classes)))
+                                             
   }
   
   integrated_process <- list(parameters = parameters,

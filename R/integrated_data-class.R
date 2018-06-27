@@ -401,10 +401,8 @@ define_mark_recapture_module <- function (data, integrated_process, observation_
     for (i in seq_along(integrated_process$replicate_id)) {
       
       # define observation matrix
-      capture_probability[[i]] <- greta::uniform(min = 0.5, max = 0.9,
-                                                 dim = c(1, integrated_process$classes))
       probs[[i]] <- calculate_history_probability(history = unique_history[[i]],
-                                                  capture_probability = capture_probability[[i]],
+                                                  capture_probability = integrated_process$parameters$capture_probability[[integrated_process$replicate_id[i]]],
                                                   parameters = greta::sweep(integrated_process$parameters$survival[[integrated_process$replicate_id[i]]],
                                                                             2, integrated_process$parameters$survival_vec[[integrated_process$replicate_id[i]]], '*'))
       
@@ -412,15 +410,11 @@ define_mark_recapture_module <- function (data, integrated_process, observation_
     
   } else {
     
-    # just a single set of parameters
-    capture_probability <- list(greta::uniform(min = 0.5, max = 0.9,
-                                               dim = c(integrated_process$classes, 1)))
-    
     # fit all elements of data to the same process model
     for (i in seq_along(data)) {
       
       probs[[i]] <- calculate_history_probability(history = unique_history[[i]],
-                                                  capture_probability = capture_probability[[1]],
+                                                  capture_probability = integrated_process$parameters$capture_probability[[1]],
                                                   parameters = greta::sweep(integrated_process$parameters$survival[[1]],
                                                                             2, integrated_process$parameters$survival_vec[[1]], '*'))
       
@@ -429,9 +423,7 @@ define_mark_recapture_module <- function (data, integrated_process, observation_
   }
   
   # collate outputs
-  cmr_module <- list(history = history,
-                     unique = unique_history,
-                     capture_probability = capture_probability,
+  cmr_module <- list(history = unique_history,
                      count = count,
                      probs = probs)
 
