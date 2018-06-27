@@ -23,7 +23,6 @@
 #' @export
 #' 
 #' @import greta
-#' @import tensorflow
 #' @import greta.dynamics
 #' 
 #' @examples
@@ -46,14 +45,19 @@ define_integrated_data <- function (data,
                                     observation_model = 'naive',
                                     settings = list()) {
   
-  if (!(process_link %in% c('growth', 'abundance',
-                            'mark_recapture', 'size_abundance',
-                            'biomass', 'community'))) {
+  if (!(process_link %in% c('individual_growth',
+                            'age_abundance',
+                            'stage_abundance',
+                            'age_recapture',
+                            'stage_recapture',
+                            'population_abundance',
+                            'population_biomass',
+                            'community'))) {
     stop('process_link must be a known process module',
          call. = FALSE)
   }  
   
-  if (process_link == 'growth') {
+  if (process_link == 'individual_growth') {
     
     # convert matrix or data.frame data to a list
     if (is.matrix(data) | is.data.frame(data)) {
@@ -94,14 +98,24 @@ define_integrated_data <- function (data,
              call. = FALSE)
       }
     }
-
+    
     # create data module from growth data matrix
-    data_module <- define_growth_module(data = data,
-                                        integrated_process = integrated_process, 
-                                        observation_model = observation_model)
-  }   
+    data_module <- define_individual_growth_module(data = data,
+                                                   integrated_process = integrated_process, 
+                                                   observation_model = observation_model)
+    
+  }    
   
-  if (process_link == 'abundance') {
+  if (process_link == 'age_abundance') {
+
+    # create data module from age abundance data matrix
+    data_module <- define_age_abundance_module(data = data,
+                                               integrated_process = integrated_process, 
+                                               observation_model = observation_model)
+    
+  }
+  
+  if (process_link == 'stage_abundance') {
     
     # check data format
     if (is.matrix(data) | is.data.frame(data)) {
@@ -151,12 +165,20 @@ define_integrated_data <- function (data,
     }
     
     # create data module from list data
-    data_module <- define_abundance_module(data = data,
+    data_module <- define_stage_abundance_module(data = data,
                                            integrated_process = integrated_process, 
                                            observation_model = observation_model)
   }  
   
-  if (process_link == 'mark_recapture') {
+  if (process_link == 'age_recapture') {
+    
+    data_module <- define_age_recapture_module(data = data,
+                                               integrated_process = integrated_process,
+                                               observation_model = observation_model)
+    
+  }
+  
+  if (process_link == 'stage_recapture') {
     
     # turn data into a list and check that each element has the correct columns
     if (is.matrix(data) | is.data.frame(data)) {
@@ -166,7 +188,7 @@ define_integrated_data <- function (data,
     } else {
       
       if (!is.list(data)) {
-        stop('mark_recapture data must be a matrix, data.frame, or list of matrices or data.frames',
+        stop('stage_recapture data must be a matrix, data.frame, or list of matrices or data.frames',
              call. = FALSE) 
       }
       
@@ -175,12 +197,12 @@ define_integrated_data <- function (data,
     # check data format
     for (i in seq_along(data)) {
       if (!('size' %in% colnames(data[[i]]))) {
-        stop('mark_recapture models require size measurements at each recapture',
+        stop('stage_recapture models require size measurements at each recapture',
              call. = FALSE)
       }
       
       if (!all(c('size', 'id', 'time') %in% colnames(data[[i]]))) { 
-        stop('mark_recapture data should be in long format with size, id, and time columns',
+        stop('stage_recapture data should be in long format with size, id, and time columns',
              call. = FALSE)
       }
     }
@@ -191,28 +213,34 @@ define_integrated_data <- function (data,
                                       settings = settings)
     
     # create data module
-    data_module <- define_mark_recapture_module(data = data,
-                                                integrated_process = integrated_process, 
-                                                observation_model = observation_model)
+    data_module <- define_stage_recapture_module(data = data,
+                                                 integrated_process = integrated_process, 
+                                                 observation_model = observation_model)
     
-  }  
+  }   
   
   if (process_link == 'population_abundance') {
+    
     data_module <- define_population_abundance_module(data = data,
                                                       integrated_process = integrated_process, 
                                                       observation_model = observation_model)
+    
   }    
   
   if (process_link == 'population_biomass') {
+    
     data_module <- define_population_biomass_module(data = data,
                                                     integrated_process = integrated_process, 
                                                     observation_model = observation_model)
+    
   }    
   
   if (process_link == 'community') {
+    
     data_module <- define_community_module(data = data,
                                            integrated_process = integrated_process, 
                                            observation_model = observation_model)
+    
   }    
   
   data_module <- list(data_module = data_module,
@@ -300,7 +328,7 @@ as.integrated_data <- function (model) {
 }
 
 # internal function: build growth data module
-define_growth_module <- function (data, integrated_process, observation_model) {
+define_individual_growth_module <- function (data, integrated_process, observation_model) {
   
   size_data <- vector('list', length = length(data))
   for (i in seq_along(data)) {
@@ -313,8 +341,17 @@ define_growth_module <- function (data, integrated_process, observation_model) {
   
 } 
 
-# internal function: build abundance data module
-define_abundance_module <- function (data, integrated_process, observation_model) {
+# internal function: build age abundance data module
+define_age_abundance_module <- function (data, integrated_process, observation_model) {
+  
+  data_module <- NULL
+  
+  data_module
+  
+}
+
+# internal function: build stage abundance data module
+define_stage_abundance_module <- function (data, integrated_process, observation_model) {
   
   # create output lists
   mu_iterated <- vector("list", length = length(data))
@@ -355,8 +392,17 @@ define_abundance_module <- function (data, integrated_process, observation_model
   
 } 
 
-# internal function: build mark-recapture data module
-define_mark_recapture_module <- function (data, integrated_process, observation_model) {
+# internal function: build age mark-recapture data module
+define_age_recapture_module <- function (data, integrated_process, observation_model) {
+  
+  data_module <- NULL
+  
+  data_module
+  
+}
+
+# internal function: build stage mark-recapture data module
+define_stage_recapture_module <- function (data, integrated_process, observation_model) {
   
   history <- vector('list', length = length(data))
   unique_history <- vector('list', length = length(data))
