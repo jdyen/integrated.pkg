@@ -81,7 +81,7 @@ define_integrated_process <- function (type, classes,
     parameters$capture_probability <- lapply(seq_len(replicates),
                                              function(i) greta::uniform(min = params_list$capture_lower,
                                                                         max = params_list$capture_upper,
-                                                                        dim = c(1, classes)))
+                                                                        dim = c(classes, 1)))
     structure <- 'IPM'
 
   }
@@ -105,7 +105,7 @@ define_integrated_process <- function (type, classes,
     parameters$capture_probability <- lapply(seq_len(replicates),
                                              function(i) greta::uniform(min = params_list$capture_lower,
                                                                         max = params_list$capture_upper,
-                                                                        dim = c(1, classes)))
+                                                                        dim = c(classes, 1)))
                                              
   }
   
