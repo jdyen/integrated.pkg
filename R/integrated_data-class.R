@@ -737,7 +737,7 @@ calculate_history_probability_v2 <- function(history, capture_probability, param
       state_vector[, observed] <- greta::sweep(state_vector[, observed],
                                                1, capture_probability, '*')
       
-      state_vector[, !observed] <- greta::sweep(state_vector[, !observed],
+      state_vector[, !observed] <- greta::sweep((state_vector[, !observed] + 1),
                                                 1, (1 - capture_probability), '*')
       
       vector_prod <- greta::tapply(c(state_vector),
