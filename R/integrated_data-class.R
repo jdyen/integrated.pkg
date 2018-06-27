@@ -726,23 +726,31 @@ calculate_history_probability_v2 <- function(history, capture_probability, param
   
   probs <- list()
   for (i in seq_along(history)) {
-
-    observed <- apply(history[[i]][seq_len(nrows[i] - 1), ],
-                      1, function(x) any(x != 0))
     
-    state_vector <- parameters %*% t(history[[i]][seq_len(nrows[i] - 1), ])
-    
-    state_vector[, observed] <- greta::sweep(state_vector[, observed],
-                                             1, capture_probability, '*')
-    
-    state_vector[, !observed] <- greta::sweep(state_vector[, !observed],
-                                              1, (1 - capture_probability), '*')
-    
-    vector_prod <- greta::tapply(c(state_vector),
-                                 id_vec[seq_len(nrows[i] * ncol(parameters))],
-                                 'prod')
-    
-    probs[[i]] <- t(history[[i]][nrows[i], ]) %*% vector_prod
+    if (nrows[i] > 1) {
+      
+      observed <- apply(history[[i]][seq_len(nrows[i] - 1), ],
+                        1, function(x) any(x != 0))
+      
+      state_vector <- parameters %*% t(history[[i]][seq_len(nrows[i] - 1), ])
+      
+      state_vector[, observed] <- greta::sweep(state_vector[, observed],
+                                               1, capture_probability, '*')
+      
+      state_vector[, !observed] <- greta::sweep(state_vector[, !observed],
+                                                1, (1 - capture_probability), '*')
+      
+      vector_prod <- greta::tapply(c(state_vector),
+                                   id_vec[seq_len(nrows[i] * ncol(parameters))],
+                                   'prod')
+      
+      probs[[i]] <- t(history[[i]][nrows[i], ]) %*% vector_prod
+      
+    } else { 
+      
+      probs[[i]] <- history[[i]] %*% capture_probability
+      
+    } 
     
   } 
 
