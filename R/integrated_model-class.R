@@ -35,7 +35,7 @@ build_integrated_model <- function (integrated_process, ...) {
     
     data_tmp <- data_modules[[i]]
     
-    if (!(data_tmp$process_link %in% c('abundance', 'growth', 'mark_recapture'))) {
+    if (!(data_tmp$process_link %in% c('stage_abundance', 'individual_growth', 'stage_recapture'))) {
       stop('only abundance, growth, and mark_recapture modules are currently implemented',
            call. = FALSE)
     }
