@@ -58,6 +58,9 @@ define_integrated_process <- function (type, classes,
                       capture_upper = 0.9)
   params_list[names(params)] <- params
   
+  # initialise empty parameters list
+  parameters <- list()
+  
   if (type == 'IPM') {
     
     params <- lapply(seq_len(replicates),
@@ -69,7 +72,6 @@ define_integrated_process <- function (type, classes,
                                                       sdlog = 2.0,
                                                       dim = classes))
     
-    parameters <- list()
     parameters$survival <- lapply(seq_len(replicates), function(i) params[[i]]$survival) 
     parameters$survival_vec <- lapply(seq_len(replicates), function(i) params[[i]]$survival_vec) 
     parameters$fecundity <- lapply(seq_len(replicates), function(i) params[[i]]$fecundity) 
@@ -94,7 +96,7 @@ define_integrated_process <- function (type, classes,
                          function(x) greta::lognormal(meanlog = 0.0,
                                                       sdlog = 4.0,
                                                       dim = classes))
-    parameters <- list()
+    
     parameters$survival <- lapply(seq_len(replicates), function(i) params[[i]]$survival) 
     parameters$survival_vec <- lapply(seq_len(replicates), function(i) params[[i]]$survival_vec) 
     parameters$fecundity <- lapply(seq_len(replicates), function(i) params[[i]]$fecundity) 
