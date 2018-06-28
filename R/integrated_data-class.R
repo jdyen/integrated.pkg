@@ -727,7 +727,7 @@ calculate_history_probability <- function(history, capture_probability, paramete
   vector_prod <- greta::tapply(c(state_vec), id_vec, 'prod')
   
   # separate vectors and matrices for individuals that were and were not recaptured
-  single_vec <- greta::sweep(greta::as_data(t(end_mat)), 1, capture_probability, '*')
+  single_vec <- greta::sweep(greta::as_data(t(end_mat[nrows == 1, ])), 1, capture_probability, '*')
   id_vec_single <- rep(seq_len(sum(nrows == 1)), each = ncol(parameters))
   recaptures_vec <- vector_prod * c(t(end_mat[nrows > 1, ]))
   id_vec_recaptures <- rep(seq_along(history[nrows > 1]),
