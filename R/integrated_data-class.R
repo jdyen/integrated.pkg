@@ -459,7 +459,7 @@ define_stage_recapture_module <- function (data, integrated_process, observation
     # fit all elements of data to the same process model
     for (i in seq_along(data)) {
       
-      probs[[i]] <- calculate_history_probability_v2(history = unique_history[[i]],
+      probs[[i]] <- calculate_history_probability(history = unique_history[[i]],
                                                      capture_probability = integrated_process$parameters$capture_probability[[1]],
                                                      parameters = greta::sweep(integrated_process$parameters$survival[[1]],
                                                                                2, integrated_process$parameters$survival_vec[[1]], '*'))
@@ -696,62 +696,51 @@ calculate_capture_history <- function(data, classes, settings) {
 
 # internal function: create greta_array containing probabilities of CMR histories
 calculate_history_probability <- function(history, capture_probability, parameters) {
-
-  history_mat <- do.call('rbind', history)
-
-  nonzero_cells <- c(t(history_mat) > 0)
   
-  observed <- apply(history_mat, 1, function(x) any(x != 0))
-  
-  state_vector <- parameters %*% t(history_mat)
-  
-  state_vector[, observed] <- greta::sweep(state_vector[, observed],
-                                           1, capture_probability, '*')
-  state_vector[, !observed] <- greta::sweep(state_vector[, !observed],
-                                            1, (1 - capture_probability), '*')
-  
-  id_vec <- rep(seq_along(history),
-                times = sapply(history, function(x) nrow(x) * ncol(x)))
-  probs <- greta::tapply(c(state_vector)[nonzero_cells], id_vec[nonzero_cells], 'prod')
-  
-  probs
-  
-}
-
-# internal function: create greta_array containing probabilities of CMR histories
-calculate_history_probability_v2 <- function(history, capture_probability, parameters) {
-  
+  # index used to ID recaptured and not-recaptured individuals
   nrows <- sapply(history, nrow)
 
+  # collapse the list of matrices into one big matrix  
   history_mat <- do.call('rbind', history)
     
+  # separate the final observation of each individual from earlier observations
   end_index <- cumsum(nrows)
   start_mat <- history_mat[-end_index, ]
   end_mat <- history_mat[end_index, ]
   
+  # for each individual, work out when it was observed and unobserved
   observed <- apply(start_mat, 1, function(x) any(x != 0))
   
+  # calculate probabilities of all possible states at time t+1 given state at time t
   state_vec <- parameters %*% greta::as_data(t(start_mat))
+  
+  # probability of being in a given state must be multiplied by probability of being captured in that state
   state_vec[, observed] <- greta::sweep(state_vec[, observed],
                                         1, capture_probability, '*')
   state_vec[, !observed] <- greta::sweep(state_vec[, !observed],
                                         1, (1 - capture_probability), '*')
 
+  # calculate products of each stage within each individual's capture history
   id_vec <- rep(seq_len(ncol(parameters)), times = nrow(start_mat)) +
-    rep(seq(from = 0, to = (ncol(parameters) * length(history) - 1), by = ncol(parameters)),
-        times = sapply(history, function(x) ncol(x) * (nrow(x) - 1)))
-  
-  ## HAVE LOST A 6-row MATRIX FROM THIS?? (6 single rows, it's the single row histories
-  #   lost in prev id_vec with (nrow(x) - 1))
+    rep(seq(from = 0, to = (ncol(parameters) * length(history[nrows > 1]) - 1), by = ncol(parameters)),
+        times = (ncol(parameters) * (nrows[nrows > 1] - 1)))
   vector_prod <- greta::tapply(c(state_vec), id_vec, 'prod')
   
-  state_vec <- vector_prod * end_mat
+  # separate vectors and matrices for individuals that were and were not recaptured
+  single_vec <- greta::sweep(greta::as_data(t(end_mat)), 1, capture_probability, '*')
+  id_vec_single <- rep(seq_len(sum(nrows == 1)), each = ncol(parameters))
+  recaptures_vec <- vector_prod * c(t(end_mat[nrows > 1, ]))
+  id_vec_recaptures <- rep(seq_along(history[nrows > 1]),
+                           each = ncol(parameters))
+
+  # calculate probs of recaptures/detection for all individuals (out of order)  
+  probs_tmp <- c(greta::tapply(c(recaptures_vec), id_vec_recaptures, 'prod'),
+                 greta::tapply(c(single_vec), id_vec_single, 'prod'))
   
-  id_vec <- rep(seq_along(history),
-                each = ncol(parameters))
-  
-  probs <- greta::tapply(c(state_vec), id_vec, 'prod')
-  
+  # reorder so that the single observations get reinserted at correct point
+  new_order <- c(seq_along(history)[nrows > 1], seq_along(history)[nrows == 1])
+  probs <- probs_tmp[match(seq_along(history), new_order)]
+    
   probs
 
 }
