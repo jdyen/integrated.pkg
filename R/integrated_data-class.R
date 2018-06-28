@@ -770,7 +770,7 @@ calculate_history_probability_v2 <- function(history, capture_probability, param
   # for each individual, work out when it was observed and unobserved
   observed <- apply(start_mat, 1, function(x) any(x != 0))
   
-  dimfun <- function (x) c(1, length(history))
+  dimfun <- function (x) c(length(history), 1)
   
   greta:::op('calculate_history_probability',
              start_mat, end_mat, capture_probability, parameters,
