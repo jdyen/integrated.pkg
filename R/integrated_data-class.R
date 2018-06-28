@@ -447,10 +447,10 @@ define_stage_recapture_module <- function (data, integrated_process, observation
     for (i in seq_along(integrated_process$replicate_id)) {
       
       # define observation matrix
-      probs[[i]] <- calculate_history_probability(history = unique_history[[i]],
-                                                  capture_probability = integrated_process$parameters$capture_probability[[integrated_process$replicate_id[i]]],
-                                                  parameters = greta::sweep(integrated_process$parameters$survival[[integrated_process$replicate_id[i]]],
-                                                                            2, integrated_process$parameters$survival_vec[[integrated_process$replicate_id[i]]], '*'))
+      probs[[i]] <- calculate_history_probability_v2(history = unique_history[[i]],
+                                                     capture_probability = integrated_process$parameters$capture_probability[[integrated_process$replicate_id[i]]],
+                                                     parameters = greta::sweep(integrated_process$parameters$survival[[integrated_process$replicate_id[i]]],
+                                                                               2, integrated_process$parameters$survival_vec[[integrated_process$replicate_id[i]]], '*'))
       
     }
     
@@ -459,7 +459,7 @@ define_stage_recapture_module <- function (data, integrated_process, observation
     # fit all elements of data to the same process model
     for (i in seq_along(data)) {
       
-      probs[[i]] <- calculate_history_probability(history = unique_history[[i]],
+      probs[[i]] <- calculate_history_probability_v2(history = unique_history[[i]],
                                                      capture_probability = integrated_process$parameters$capture_probability[[1]],
                                                      parameters = greta::sweep(integrated_process$parameters$survival[[1]],
                                                                                2, integrated_process$parameters$survival_vec[[1]], '*'))
@@ -741,6 +741,83 @@ calculate_history_probability <- function(history, capture_probability, paramete
   new_order <- c(seq_along(history)[nrows > 1], seq_along(history)[nrows == 1])
   probs <- probs_tmp[match(seq_along(history), new_order)]
     
+  probs
+
+}
+
+# internal function: create greta_array containing probabilities of CMR histories
+calculate_history_probability_v2 <- function(history, capture_probability, parameters) {
+  
+  # index used to ID recaptured and not-recaptured individuals
+  nrows <- sapply(history, nrow)
+  
+  # collapse the list of matrices into one big matrix  
+  history_mat <- do.call('rbind', history)
+  
+  # separate the final observation of each individual from earlier observations
+  end_index <- cumsum(nrows)
+  start_mat <- greta::as_data(history_mat[-end_index, ])
+  end_mat <- greta::as_data(history_mat[end_index, ])
+  
+  # calculate products of each stage within each individual's capture history
+  id_vec <- rep(seq_len(ncol(parameters)), times = nrow(start_mat)) +
+    rep(seq(from = 0, to = (ncol(parameters) * length(history[nrows > 1]) - 1), by = ncol(parameters)),
+        times = (ncol(parameters) * (nrows[nrows > 1] - 1)))
+  id_vec_single <- rep(seq_len(sum(nrows == 1)), each = ncol(parameters))
+  id_vec_recaptures <- rep(seq_along(history[nrows > 1]),
+                           each = ncol(parameters))
+  
+  # for each individual, work out when it was observed and unobserved
+  observed <- apply(start_mat, 1, function(x) any(x != 0))
+  
+  dimfun <- function (x) c(1, length(history))
+  
+  greta:::op('calculate_history_probability',
+             start_mat, end_mat, capture_probability, parameters,
+             operation_args = list(nrows = nrows,
+                                   observed = observed,
+                                   id_vec = id_vec,
+                                   id_vec_single = id_vec_single,
+                                   id_vec_recaptures = id_vec_recaptures),
+             tf_operation = 'integrated:::tf_calculate_history_probability',
+             dimfun = dimfun)
+  
+}
+
+
+
+tf_calculate_history_probability <- function(start_mat, end_mat,
+                                             capture_probability,
+                                             parameters,
+                                             nrows, observed, id_vec,
+                                             id_vec_single, id_vec_recaptures) {
+  
+  # calculate probabilities of all possible states at time t+1 given state at time t
+  state_vec <- tf$matmul(parameters, start_mat,
+                         transpose_b = TRUE)
+  
+  # probability of being in a given state must be multiplied by probability of being captured in that state
+  state_vec[, observed] <- do.call('*', list(state_vec[, observed],
+                                             capture_probability))
+  state_vec[, !observed] <- do.call('*', list(state_vec[, observed],
+                                              tf$subtract(tf$constant(1, dtype = tf$float32), capture_probability)))
+  
+  # calculate products of each stage within each individual's capture history
+  vector_prod <- tf$unsorted_segment_prod(tf$reshape(tf$transpose(state_vec), shape = -1L), id_vec)
+  
+  # separate vectors and matrices for individuals that were and were not recaptured
+  single_vec <- do.call('*', list(t(end_mat[nrows == 1, ]),
+                                  capture_probability))
+  recaptures_vec <- tf$multiply(vector_prod, tf$reshape(t(end_mat[nrows > 1, ]), shape = -1L))
+  
+  # calculate probs of recaptures/detection for all individuals (out of order)  
+  probs_tmp <- tf$concatenate(tf$reduce_prod(recaptures_vec, axis = 0L),
+                              tf$reduce_prod(single_vec, axis = 0L))
+
+  # reorder so that the single observations get reinserted at correct point
+  new_order <- c(seq_along(nrows)[nrows > 1], seq_along(nrows)[nrows == 1])
+  probs <- probs_tmp[match(seq_along(nrows), new_order)]
+  
   probs
 
 }
