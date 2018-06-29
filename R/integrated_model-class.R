@@ -121,23 +121,33 @@ build_integrated_model <- function (integrated_process, ...) {
       
       for (i in seq_along(data_tmp$data_module$count)) {
         
-        # if there are multiple data elements and only one process matrix
-        if (integrated_process$replicates == 1) {
+        # initialise main outputs
+        probs <- vector('list', length = length(data))
+        
+        # use separate process models if they exist
+        if (integrated_process$replicates > 1) {
           
           greta::distribution(data_tmp$data_module$count[[i]]) <-
             greta::multinomial(size = sum(data_tmp$data_module$count[[i]]),
-                               prob = data_tmp$data_module$probs[[1]],
+                               prob = calculate_history_probability(history = data_tmp$data_module$history[[i]],
+                                                                    capture_probability = integrated_process$parameters$capture_probability[[integrated_process$replicate_id[i]]],
+                                                                    parameters = greta::sweep(integrated_process$parameters$survival[[integrated_process$replicate_id[i]]],
+                                                                                              2, integrated_process$parameters$survival_vec[[integrated_process$replicate_id[i]]], '*')),
                                dim = 1)
           
-        } else {
+        } else {  
           
+          # if there are multiple data elements and only one process matrix
           greta::distribution(data_tmp$data_module$count[[i]]) <-
             greta::multinomial(size = sum(data_tmp$data_module$count[[i]]),
-                               prob = data_tmp$data_module$probs[[integrated_process$replicate_id[i]]],
+                               prob = calculate_history_probability(history = data_tmp$data_module$history[[i]],
+                                                                    capture_probability = integrated_process$parameters$capture_probability[[1]],
+                                                                    parameters = greta::sweep(integrated_process$parameters$survival[[1]],
+                                                                                              2, integrated_process$parameters$survival_vec[[1]], '*')),
                                dim = 1)
           
         }
-        
+         
       }
       
     }
