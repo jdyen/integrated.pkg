@@ -24,6 +24,7 @@
 #' 
 #' @import greta
 #' @import greta.dynamics
+#' @import tensorflow
 #' 
 #' @examples
 #' 
