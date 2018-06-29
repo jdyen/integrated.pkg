@@ -52,10 +52,10 @@ define_integrated_process <- function (type, classes,
   # fill params_list
   params_list <- list(fec_lower = 0,
                       fec_upper = 1000,
-                      density_lower = 0,
-                      density_upper = 5,
-                      capture_lower = 0.25,
-                      capture_upper = 0.9)
+                      density_lower = 0.999,
+                      density_upper = 1.001,
+                      capture_lower = 0.999,
+                      capture_upper = 1.0)
   params_list[names(params)] <- params
   
   # initialise empty parameters list
