@@ -765,8 +765,9 @@ calculate_history_probability_v2 <- function(history, capture_probability, param
   
   # create unique index for each stage and each individual
   stage_id <- rep(seq_len(nstage), times = nrow(start)) +
-    rep(seq(from = 0, to = (nstage * sum(nrows > 1)), by = nstage),
+    rep(seq(from = 0, to = (nstage * sum(nrows > 1) - 1), by = nstage),
         times = (nstage * (nrows[nrows > 1] - 1)))
+  stage_id <- as.integer(stage_id) - 1L
 
   # for each individual, work out when it was observed and unobserved
   obs_tmp <- apply(start, 1, function(x) any(x != 0))
@@ -787,7 +788,6 @@ calculate_history_probability_v2 <- function(history, capture_probability, param
              capture_probability, parameters,
              operation_args = list(start = start,
                                    end = end,
-                                   nrows = nrows,
                                    nstage = nstage,
                                    sort = sort,
                                    stage_id = stage_id,
@@ -805,8 +805,7 @@ calculate_history_probability_v2 <- function(history, capture_probability, param
 tf_calculate_history_probability <- function(capture_probability,
                                              parameters,
                                              start, end,
-                                             nrows, nstage,
-                                             sort, stage_id,
+                                             nstage, sort, stage_id,
                                              observed, unobserved,
                                              single, multi, final) {
   
