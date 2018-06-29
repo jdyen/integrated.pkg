@@ -448,23 +448,23 @@ define_stage_recapture_module <- function (data, integrated_process, observation
       
       # define observation matrix
       probs[[i]] <- calculate_history_probability(history = unique_history[[i]],
-                                                     capture_probability = integrated_process$parameters$capture_probability[[integrated_process$replicate_id[i]]],
-                                                     parameters = greta::sweep(integrated_process$parameters$survival[[integrated_process$replicate_id[i]]],
-                                                                               2, integrated_process$parameters$survival_vec[[integrated_process$replicate_id[i]]], '*'))
+                                                  capture_probability = integrated_process$parameters$capture_probability[[integrated_process$replicate_id[i]]],
+                                                  parameters = greta::sweep(integrated_process$parameters$survival[[integrated_process$replicate_id[i]]],
+                                                                            2, integrated_process$parameters$survival_vec[[integrated_process$replicate_id[i]]], '*'))
       
-    } 
+    }  
     
-  } else { 
+  } else {  
     
     # fit all elements of data to the same process model
     for (i in seq_along(data)) {
       
       probs[[i]] <- calculate_history_probability(history = unique_history[[i]],
-                                                     capture_probability = integrated_process$parameters$capture_probability[[1]],
-                                                     parameters = greta::sweep(integrated_process$parameters$survival[[1]],
-                                                                               2, integrated_process$parameters$survival_vec[[1]], '*'))
+                                                  capture_probability = integrated_process$parameters$capture_probability[[1]],
+                                                  parameters = greta::sweep(integrated_process$parameters$survival[[1]],
+                                                                            2, integrated_process$parameters$survival_vec[[1]], '*'))
       
-    }  
+    }   
     
   }
   
