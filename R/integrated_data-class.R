@@ -764,12 +764,12 @@ calculate_history_probability_v2 <- function(history, capture_probability, param
   end <- history_mat[end_index, ]
   
   # create unique index for each stage and each individual
-  stage_id <- rep(seq_len(nstage), times = nrow(start_mat)) +
+  stage_id <- rep(seq_len(nstage), times = nrow(start)) +
     rep(seq(from = 0, to = (nstage * sum(nrows > 1)), by = nstage),
         times = (nstage * (nrows[nrows > 1] - 1)))
 
   # for each individual, work out when it was observed and unobserved
-  obs_tmp <- apply(start_mat, 1, function(x) any(x != 0))
+  obs_tmp <- apply(start, 1, function(x) any(x != 0))
   observed <- which(obs_tmp) - 1L
   unobserved <- which(!obs_tmp) - 1L
   
