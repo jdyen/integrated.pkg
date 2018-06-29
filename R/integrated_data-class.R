@@ -833,7 +833,7 @@ tf_calculate_history_probability <- function(capture_probability,
   single_prob <- do.call('*',
                          list(tf$transpose(tf$gather(tf$constant(end, dtype = tf$float32), single)),
                               capture_probability)) 
-  multi_prob <- stage_prob * tf$gather(end, multi)
+  multi_prob <- stage_prob * tf$gather(tf$constant(end, dtype = tf$float32), multi)
    
   # calculate probs of recaptures/detection for all individuals (out of order)  
   probs_tmp <- tf$concat(list(tf$reduce_sum(tf$transpose(multi_prob), axis = 0L),
