@@ -158,7 +158,7 @@ build_integrated_model <- function (integrated_process, ...) {
     do.call('c', integrated_process$parameters$fecundity),
     do.call('c', integrated_process$parameters$survival_vec),
     do.call('c', integrated_process$parameters$capture_probability),
-    do.call('c', integrated_process$parameters$mu_initial),
+    do.call('c', integrated_process$mu_initial),
     do.call('c', integrated_process$parameters$density_parameter))
   
 }

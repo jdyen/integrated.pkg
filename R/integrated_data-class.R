@@ -365,7 +365,7 @@ define_stage_abundance_module <- function (data, integrated_process, observation
                                                        '*') +
                                             integrated_process$parameters$fecundity[[integrated_process$replicate_id[i]]]),
                                         integrated_process$mu_initial[[integrated_process$replicate_id[i]]],
-                                        integrated_process$parameters$density_parameter,
+                                        integrated_process$parameters$density_parameter[[integrated_process$replicate_id[i]]],
                                         seq_len(ncol(data[[i]])),
                                         integrated_process$density_dependence)
       
@@ -379,7 +379,7 @@ define_stage_abundance_module <- function (data, integrated_process, observation
                                                        '*') +  
                                             integrated_process$parameters$fecundity[[1]]),
                                         integrated_process$mu_initial[[1]],
-                                        integrated_process$parameters$density_parameter,
+                                        integrated_process$parameters$density_parameter[[1]],
                                         seq_len(ncol(data[[i]])),
                                         integrated_process$density_dependence)
     
