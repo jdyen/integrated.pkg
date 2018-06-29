@@ -791,10 +791,7 @@ tf_calculate_history_probability <- function(capture_probability,
   
   # reorder so that the single observations get reinserted at correct point
   probs <- tf$gather(probs_tmp, final)
-  
-  # standardise probabilities so they sum to one
-  probs <- probs / tf$reduce_sum(probs)
-  
+
   probs
 
 }
