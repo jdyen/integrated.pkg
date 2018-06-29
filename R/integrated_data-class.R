@@ -360,24 +360,24 @@ define_stage_abundance_module <- function (data, integrated_process, observation
   if (integrated_process$replicates > 1) {
     
     for (i in seq_along(integrated_process$replicate_id)) {
-      mu_iterated[[i]] <- iterate_state((sweep(integrated_process$parameters$survival[[integrated_process$replicate_id[i]]],
-                                               2, integrated_process$parameters$survival_vec[[integrated_process$replicate_id[i]]],
-                                               '*') +
-                                           integrated_process$parameters$fecundity[[integrated_process$replicate_id[i]]]),
+      mu_iterated[[i]] <- iterate_state(t(greta::sweep(integrated_process$parameters$survival[[integrated_process$replicate_id[i]]],
+                                                       2, integrated_process$parameters$survival_vec[[integrated_process$replicate_id[i]]],
+                                                       '*') +
+                                            integrated_process$parameters$fecundity[[integrated_process$replicate_id[i]]]),
                                         integrated_process$mu_initial[[integrated_process$replicate_id[i]]],
                                         integrated_process$parameters$density_parameter,
                                         seq_len(ncol(data[[i]])),
                                         integrated_process$density_dependence)
       
     } 
-  } else {
+  } else {  
     
     # fit all elements of data to the same process model
     for (i in seq_len(length(data))) {
-      mu_iterated[[i]] <- iterate_state((sweep(integrated_process$parameters$survival[[1]],
-                                               2, integrated_process$parameters$survival_vec[[1]],
-                                               '*') +
-                                           integrated_process$parameters$fecundity[[1]]),
+      mu_iterated[[i]] <- iterate_state(t(greta::sweep(integrated_process$parameters$survival[[1]],
+                                                       2, integrated_process$parameters$survival_vec[[1]],
+                                                       '*') +  
+                                            integrated_process$parameters$fecundity[[1]]),
                                         integrated_process$mu_initial[[1]],
                                         integrated_process$parameters$density_parameter,
                                         seq_len(ncol(data[[i]])),
