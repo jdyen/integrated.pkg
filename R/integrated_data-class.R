@@ -745,78 +745,104 @@ calculate_history_probability <- function(history, capture_probability, paramete
 
 }
 
+# define op function to setup tensorflow functions
+op <- greta::.internals$nodes$constructors$op
+
 # internal function: create greta_array containing probabilities of CMR histories
 calculate_history_probability_v2 <- function(history, capture_probability, parameters) {
   
   # index used to ID recaptured and not-recaptured individuals
   nrows <- sapply(history, nrow)
+  nstage <- ncol(parameters)
   
   # collapse the list of matrices into one big matrix  
   history_mat <- do.call('rbind', history)
   
   # separate the final observation of each individual from earlier observations
   end_index <- cumsum(nrows)
-  start_mat <- greta::as_data(history_mat[-end_index, ])
-  end_mat <- greta::as_data(history_mat[end_index, ])
+  start <- history_mat[-end_index, ]
+  end <- history_mat[end_index, ]
   
-  # calculate products of each stage within each individual's capture history
-  id_vec <- rep(seq_len(ncol(parameters)), times = nrow(start_mat)) +
-    rep(seq(from = 0, to = (ncol(parameters) * length(history[nrows > 1]) - 1), by = ncol(parameters)),
-        times = (ncol(parameters) * (nrows[nrows > 1] - 1)))
-  id_vec_single <- rep(seq_len(sum(nrows == 1)), each = ncol(parameters))
-  id_vec_recaptures <- rep(seq_along(history[nrows > 1]),
-                           each = ncol(parameters))
-  
+  # create unique index for each stage and each individual
+  stage_id <- rep(seq_len(nstage), times = nrow(start_mat)) +
+    rep(seq(from = 0, to = (nstage * sum(nrows > 1)), by = nstage),
+        times = (nstage * (nrows[nrows > 1] - 1)))
+
   # for each individual, work out when it was observed and unobserved
-  observed <- apply(start_mat, 1, function(x) any(x != 0))
+  obs_tmp <- apply(start_mat, 1, function(x) any(x != 0))
+  observed <- which(obs_tmp) - 1L
+  unobserved <- which(!obs_tmp) - 1L
+  
+  # create indices to sort and reorder intermediate and final outputs
+  sort <- match(seq_along(obs_tmp), c(which(obs_tmp), which(!obs_tmp))) - 1L
+  final <- match(seq_along(nrows), c(which(nrows > 1), which(nrows == 1))) - 1L
+  
+  # identify individuals observed once and those observed multiple times
+  single <- which(nrows == 1) - 1L
+  multi <- which(nrows > 1) - 1L
   
   dimfun <- function (x) c(length(history), 1)
   
   greta:::op('calculate_history_probability',
-             start_mat, end_mat, capture_probability, parameters,
-             operation_args = list(nrows = nrows,
+             capture_probability, parameters,
+             operation_args = list(start = start,
+                                   end = end,
+                                   nrows = nrows,
+                                   nstage = nstage,
+                                   sort = sort,
+                                   stage_id = stage_id,
                                    observed = observed,
-                                   id_vec = id_vec,
-                                   id_vec_single = id_vec_single,
-                                   id_vec_recaptures = id_vec_recaptures),
+                                   unobserved = unobserved,
+                                   single = single,
+                                   multi = multi,
+                                   final = final),
              tf_operation = 'integrated:::tf_calculate_history_probability',
              dimfun = dimfun)
   
 }
 
-
-
-tf_calculate_history_probability <- function(start_mat, end_mat,
-                                             capture_probability,
+# internal: tf function to calculate cmr history probabilities
+tf_calculate_history_probability <- function(capture_probability,
                                              parameters,
-                                             nrows, observed, id_vec,
-                                             id_vec_single, id_vec_recaptures) {
+                                             start, end,
+                                             nrows, nstage,
+                                             sort, stage_id,
+                                             observed, unobserved,
+                                             single, multi, final) {
   
-  # calculate probabilities of all possible states at time t+1 given state at time t
-  state_vec <- tf$matmul(parameters, start_mat,
-                         transpose_b = TRUE)
+  # calculate probabilities of all possible states at times t>1 given state at time 1
+  state <- tf$matmul(parameters, tf$transpose(tf$constant(start, dtype = tf$float64)))
   
-  # probability of being in a given state must be multiplied by probability of being captured in that state
-  state_vec[, observed] <- do.call('*', list(state_vec[, observed],
-                                             capture_probability))
-  state_vec[, !observed] <- do.call('*', list(state_vec[, observed],
-                                              tf$subtract(tf$constant(1, dtype = tf$float32), capture_probability)))
+  # multiply transition probabilities by probability of being captured in a given state
+  state_observed <- do.call('*', list(tf$transpose(tf$gather(tf$transpose(state), observed)),
+                                      capture_probability)) 
+  state_unobserved <- do.call('*', list(tf$transpose(tf$gather(tf$transpose(state), unobserved)),
+                                        1.0 - capture_probability)) 
+  states <- tf$concat(list(state_observed, state_unobserved), axis = 1L) 
+  
+  # reorder vector so that observed and unobserved elements are in the correct
+  #   places rather than just concatenated
+  states <- tf$transpose(tf$gather(tf$transpose(states), sort))
   
   # calculate products of each stage within each individual's capture history
-  vector_prod <- tf$unsorted_segment_prod(tf$reshape(tf$transpose(state_vec), shape = -1L), id_vec)
+  stage_prob <- tf$unsorted_segment_prod(
+    tf$reshape(tf$transpose(states), shape = c(length(states), 1L)),
+    stage_id, length(unique(stage_id))) 
+  stage_prob <- tf$transpose(tf$reshape(stage_prob, shape = c(nstage, length(multi))))
   
   # separate vectors and matrices for individuals that were and were not recaptured
-  single_vec <- do.call('*', list(t(end_mat[nrows == 1, ]),
-                                  capture_probability))
-  recaptures_vec <- tf$multiply(vector_prod, tf$reshape(t(end_mat[nrows > 1, ]), shape = -1L))
-  
+  single_prob <- do.call('*',
+                         list(tf$transpose(tf$gather(tf$constant(end, dtype = tf$float64), single)),
+                              capture_probability)) 
+  multi_prob <- stage_prob * tf$gather(end, multi)
+   
   # calculate probs of recaptures/detection for all individuals (out of order)  
-  probs_tmp <- tf$concatenate(tf$reduce_prod(recaptures_vec, axis = 0L),
-                              tf$reduce_prod(single_vec, axis = 0L))
-
+  probs_tmp <- tf$concat(list(tf$reduce_sum(tf$transpose(multi_prob), axis = 0L),
+                              tf$reduce_sum(single_prob, axis = 0L)),
+                         axis = 0L)
+  
   # reorder so that the single observations get reinserted at correct point
-  new_order <- c(seq_along(nrows)[nrows > 1], seq_along(nrows)[nrows == 1])
-  probs <- probs_tmp[match(seq_along(nrows), new_order)]
+  probs <- tf$gather(probs_tmp, final)
   
   probs
 
