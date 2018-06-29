@@ -810,7 +810,7 @@ tf_calculate_history_probability <- function(capture_probability,
                                              single, multi, final) {
   
   # calculate probabilities of all possible states at times t>1 given state at time 1
-  state <- tf$matmul(parameters, tf$transpose(tf$constant(start, dtype = tf$float64)))
+  state <- tf$matmul(parameters, tf$transpose(tf$constant(start, dtype = tf$float32)))
   
   # multiply transition probabilities by probability of being captured in a given state
   state_observed <- do.call('*', list(tf$transpose(tf$gather(tf$transpose(state), observed)),
@@ -831,7 +831,7 @@ tf_calculate_history_probability <- function(capture_probability,
   
   # separate vectors and matrices for individuals that were and were not recaptured
   single_prob <- do.call('*',
-                         list(tf$transpose(tf$gather(tf$constant(end, dtype = tf$float64), single)),
+                         list(tf$transpose(tf$gather(tf$constant(end, dtype = tf$float32), single)),
                               capture_probability)) 
   multi_prob <- stage_prob * tf$gather(end, multi)
    
