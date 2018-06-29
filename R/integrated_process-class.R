@@ -100,8 +100,9 @@ define_integrated_process <- function (type, classes,
     parameters$survival <- lapply(seq_len(replicates), function(i) params[[i]]$survival) 
     parameters$survival_vec <- lapply(seq_len(replicates), function(i) params[[i]]$survival_vec) 
     parameters$fecundity <- lapply(seq_len(replicates), function(i) params[[i]]$fecundity) 
-    parameters$density_parameter <- greta::uniform(min = params_list$density_lower,
-                                                   max = params_list$density_upper, dim = 1)
+    parameters$density_parameter <- lapply(seq_len(replicates),
+                                           function(i) greta::uniform(min = params_list$density_lower,
+                                                                      max = params_list$density_upper, dim = 1))
     parameters$capture_probability <- lapply(seq_len(replicates),
                                              function(i) greta::uniform(min = params_list$capture_lower,
                                                                         max = params_list$capture_upper,
