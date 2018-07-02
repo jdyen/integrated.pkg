@@ -422,7 +422,8 @@ define_stage_recapture_module <- function (data, integrated_process, observation
     unique_history_vec <- unique(history[[i]])
     unique_history[[i]] <- vector('list', length = length(unique_history_vec))
     #count[[i]] <- rep(NA, length = length(unique_history_vec))
-    count[[i]] <- vector('list', length = integrated_process$classes)
+    count[[i]] <- lapply(seq_len(integrated_process$classes),
+                         function(x) rep(0, integrated_process$classes))
     for (j in seq_along(unique_history_vec)) {
       # count[[i]][j] <- sum(sapply(history[[i]], function(x) ifelse(length(x) == length(unique_history_vec[[j]]),
       #                                                              all(x == unique_history_vec[[j]]),
@@ -435,7 +436,6 @@ define_stage_recapture_module <- function (data, integrated_process, observation
                                          byrow = TRUE)
       
       for (k in seq_len(nrow(unique_history[[i]][[j]]))[-1]) {
-        count[[i]] <- rep(0, integrated_process$classes)
         ind1 <- which(unique_history[[i]][[j]][(k - 1), ] != 0)
         ind2 <- which(unique_history[[i]][[j]][k, ] != 0)
         if (length(ind1) & length(ind2)) {
