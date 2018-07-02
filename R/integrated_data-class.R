@@ -470,6 +470,7 @@ define_stage_recapture_module <- function (data, integrated_process, observation
       }
       
     }
+    count[[i]] <- lapply(count[[i]], function(x) matrix(x, ncol = 1))
     
     # count[[i]] <- matrix(count[[i]], nrow = 1)
     

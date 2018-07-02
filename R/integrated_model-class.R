@@ -121,9 +121,6 @@ build_integrated_model <- function (integrated_process, ...) {
       
       for (i in seq_along(data_tmp$data_module$count)) {
         
-        # initialise main outputs
-        probs <- vector('list', length = length(data))
-        
         # use separate process models if they exist
         if (integrated_process$replicates > 1) {
           
