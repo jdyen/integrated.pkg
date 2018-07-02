@@ -158,7 +158,7 @@ build_integrated_model <- function (integrated_process, ...) {
             
             greta::distribution(data_tmp$data_module$count2[[i]]) <-
               greta::binomial(size = data_tmp$data_module$total[[i]],
-                              prob = integrated_process$parameters$survival_vec[[integrated_process$replicate_id[i]]],
+                              prob = integrated_process$parameters$survival_vec[[1]],
                               dim = c(integrated_process$classes, 1))
             
           }
