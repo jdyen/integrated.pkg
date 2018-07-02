@@ -407,6 +407,8 @@ define_stage_recapture_module <- function (data, integrated_process, observation
   history <- vector('list', length = length(data))
   unique_history <- vector('list', length = length(data))
   count <- vector('list', length = length(data))
+  count2 <- vector('list', length = length(data))
+  total <- vector('list', length = length(data))
   
   for (i in seq_along(data)) {
     
@@ -424,6 +426,8 @@ define_stage_recapture_module <- function (data, integrated_process, observation
     #count[[i]] <- rep(NA, length = length(unique_history_vec))
     count[[i]] <- lapply(seq_len(integrated_process$classes),
                          function(x) rep(0, integrated_process$classes))
+    count2[[i]] <- rep(0, integrated_process$classes)
+    total[[i]] <- rep(0, integrated_process$classes)
     for (j in seq_along(unique_history_vec)) {
       # count[[i]][j] <- sum(sapply(history[[i]], function(x) ifelse(length(x) == length(unique_history_vec[[j]]),
       #                                                              all(x == unique_history_vec[[j]]),
@@ -440,8 +444,11 @@ define_stage_recapture_module <- function (data, integrated_process, observation
         ind2 <- which(unique_history[[i]][[j]][k, ] != 0)
         if (length(ind1) & length(ind2)) {
           count[[i]][[ind1]][ind2] <- count[[i]][[ind1]][ind2] + 1
+          count2[[i]][ind1] <- count2[[i]][ind1] + 1
+          total[[i]][ind1] <- total[[i]][ind1] + 1
         }
         if (length(ind1) & !(length(ind2))) {
+          total[[i]][ind1] <- total[[i]][ind1] + 1
           if (ind1 < (length(count[[i]]) - 1)) {
             ind1_set <- ind1:(ind1 + 2)
           } else {
@@ -463,6 +470,8 @@ define_stage_recapture_module <- function (data, integrated_process, observation
               ind2_set <- ind2
             }
           }
+          count2[[i]][ind2_set] <- count2[[i]][ind2_set] + 1
+          total[[i]][ind2_set] <- total[[i]][ind2_set] + 1
           for (kk in seq_along(ind2_set)) {
             count[[i]][[ind2_set[kk]]][ind2] <- count[[i]][[ind2_set[kk]]][ind2] + 1
           }
@@ -474,11 +483,15 @@ define_stage_recapture_module <- function (data, integrated_process, observation
     
     # count[[i]] <- matrix(count[[i]], nrow = 1)
     
+    ## COULD RETURN A COUNT OF DETECTED/NOT DETECTED AND THEN UPDATE TOTAL SURVIVAL?
+    
   } 
   
   # collate outputs
   cmr_module <- list(history = unique_history,
-                     count = count)
+                     count = count,
+                     count2 = count2,
+                     total = total)
 
   cmr_module
   
