@@ -96,7 +96,7 @@ build_integrated_model <- function (integrated_process, ...) {
           for (j in seq_along(data_tmp$data_module[[i]])) {
             greta::distribution(data_tmp$data_module[[i]][[j]]) <-
               greta::multinomial(size = sum(data_tmp$data_module[[i]][[j]]),
-                                 prob = t(integrated_process$parameters$survival[[1]][j, ]),
+                                 prob = integrated_process$parameters$survival[[1]][, j],
                                  dim = 1)
           }
           
@@ -106,7 +106,7 @@ build_integrated_model <- function (integrated_process, ...) {
           for (j in seq_along(data_tmp$data_module[[i]])) {
             greta::distribution(data_tmp$data_module[[i]][[j]]) <-
               greta::multinomial(size = sum(data_tmp$data_module[[i]][[j]]),
-                                 prob = t(integrated_process$parameters$survival[[integrated_process$replicate_id[i]]][j, ]),
+                                 prob = integrated_process$parameters$survival[[integrated_process$replicate_id[i]]][, j],
                                  dim = 1)
             
           }
@@ -129,7 +129,7 @@ build_integrated_model <- function (integrated_process, ...) {
           
           for (j in seq_len(ncol(data_tmp$data_module$count[[i]]))) {
             
-            greta::distribution(data_tmp$data_module$count[[i]][, j]) <-
+            greta::distribution(t(data_tmp$data_module$count[[i]][, j])) <-
               greta::multinomial(size = sum(data_tmp$data_module$count[[i]][, j]),
                                  prob = integrated_process$parameters$survival[[integrated_process$replicate_id[i]]][, j],
                                  # prob = calculate_history_probability(history = data_tmp$data_module$history[[i]],
@@ -145,7 +145,7 @@ build_integrated_model <- function (integrated_process, ...) {
           for (j in seq_len(ncol(data_tmp$data_module$count[[i]]))) {
             
             # if there are multiple data elements and only one process matrix
-            greta::distribution(data_tmp$data_module$count[[i]][, j]) <-
+            greta::distribution(t(data_tmp$data_module$count[[i]][, j])) <-
               greta::multinomial(size = sum(data_tmp$data_module$count[[i]][, j]),
                                  prob = integrated_process$parameters$survival[[1]][, j],
                                  # prob = calculate_history_probability(history = data_tmp$data_module$history[[i]],
