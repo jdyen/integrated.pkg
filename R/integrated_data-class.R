@@ -421,19 +421,36 @@ define_stage_recapture_module <- function (data, integrated_process, observation
     # calculate unique CMR histories and counts of each
     unique_history_vec <- unique(history[[i]])
     unique_history[[i]] <- vector('list', length = length(unique_history_vec))
-    count[[i]] <- rep(NA, length = length(unique_history_vec))
+    #count[[i]] <- rep(NA, length = length(unique_history_vec))
+    count[[i]] <- matrix(0, nrow = integrated_process$classes, ncol = integrated_process$classes)
     for (j in seq_along(unique_history_vec)) {
-      count[[i]][j] <- sum(sapply(history[[i]], function(x) ifelse(length(x) == length(unique_history_vec[[j]]),
-                                                                   all(x == unique_history_vec[[j]]),
-                                                                   FALSE))) 
+      # count[[i]][j] <- sum(sapply(history[[i]], function(x) ifelse(length(x) == length(unique_history_vec[[j]]),
+      #                                                              all(x == unique_history_vec[[j]]),
+      #                                                              FALSE)))
       mat_tmp <- c(t(matrix(0, nrow = length(unique_history_vec[[j]]), ncol = integrated_process$classes)))
       mat_tmp[seq(1, length(unique_history_vec[[j]]) * integrated_process$classes,
                   by = integrated_process$classes)[seq_len(length(unique_history_vec[[j]]))] +
                 ifelse(unique_history_vec[[j]] == 0, 1, unique_history_vec[[j]]) - 1] <- unique_history_vec[[j]]
       unique_history[[i]][[j]] <- matrix(ifelse(mat_tmp > 0, 1, 0), ncol = integrated_process$classes,
                                          byrow = TRUE)
-    }   
-    count[[i]] <- matrix(count[[i]], nrow = 1)
+      
+      for (k in seq_len(nrow(unique_history[[i]][[j]]))[-1]) {
+        ind1 <- which(unique_history[[i]][[j]][(k - 1), ] != 0)
+        ind2 <- which(unique_history[[i]][[j]][k, ] != 0)
+        if (length(ind1) & length(ind2)) {
+          count[[i]][ind2, ind1] <- count[[i]][ind2, ind1] + 1
+        }
+        if (length(ind1) & !(length(ind2))) {
+          count[[i]][, ind1] <- count[[i]][, ind1] + 1
+        }
+        if (!(length(ind1)) & length(ind2)) {
+          count[[i]][ind2, ] <- count[[i]][ind2, ] + 1
+        }
+      }
+      
+    }
+    
+    # count[[i]] <- matrix(count[[i]], nrow = 1)
     
   } 
   
