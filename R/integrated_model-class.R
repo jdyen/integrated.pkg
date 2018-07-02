@@ -135,6 +135,11 @@ build_integrated_model <- function (integrated_process, ...) {
                                  #                                                                2, integrated_process$parameters$survival_vec[[integrated_process$replicate_id[i]]], '*')),
                                  dim = 1)
             
+            greta::distribution(data_tmp$data_module$count2[[i]]) <-
+              greta::binomial(size = data_tmp$data_module$total[[i]],
+                              prob = integrated_process$parameters$survival_vec[[integrated_process$replicate_id[i]]],
+                              dim = c(integrated_process$classes, 1))
+            
           }
           
         } else {  
@@ -150,6 +155,11 @@ build_integrated_model <- function (integrated_process, ...) {
                                  #                                      parameters = greta::sweep(integrated_process$parameters$survival[[1]],
                                  #                                                                2, integrated_process$parameters$survival_vec[[1]], '*')),
                                  dim = 1)
+            
+            greta::distribution(data_tmp$data_module$count2[[i]]) <-
+              greta::binomial(size = data_tmp$data_module$total[[i]],
+                              prob = integrated_process$parameters$survival_vec[[integrated_process$replicate_id[i]]],
+                              dim = c(integrated_process$classes, 1))
             
           }
           
