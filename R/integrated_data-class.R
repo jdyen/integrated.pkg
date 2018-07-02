@@ -442,10 +442,10 @@ define_stage_recapture_module <- function (data, integrated_process, observation
           count[[i]][[ind1]][ind2] <- count[[i]][[ind1]][ind2] + 1
         }
         if (length(ind1) & !(length(ind2))) {
-          if (ind1 < (ncol(count[[i]]) - 1)) {
+          if (ind1 < (length(count[[i]]) - 1)) {
             ind1_set <- ind1:(ind1 + 2)
           } else {
-            if (ind1 < ncol(count[[i]])) {
+            if (ind1 < length(count[[i]])) {
               ind1_set <- ind1:(ind1 + 1)
             } else {
               ind1_set <- ind1
@@ -454,10 +454,10 @@ define_stage_recapture_module <- function (data, integrated_process, observation
           count[[i]][[ind1]][ind1_set] <- count[[i]][[ind1]][ind1_set] + 1
         }
         if (!(length(ind1)) & length(ind2)) {
-          if (ind2 < (ncol(count[[i]]) - 1)) {
+          if (ind2 < (length(count[[i]]) - 1)) {
             ind2_set <- (ind2 - 2):ind2
           } else {
-            if (ind2 < ncol(count[[i]])) {
+            if (ind2 < length(count[[i]])) {
               ind2_set <- (ind2 - 1):ind2
             } else {
               ind2_set <- ind2
