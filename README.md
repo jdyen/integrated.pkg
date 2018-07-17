@@ -1,4 +1,5 @@
 <img src="README_files/banner.png" width="4032" />
+
 The `integrated` R package estimates demographic vital rates from diverse and distinct data types. The integrated modelling process is designed to be flexible and customisable, and supports several different process models and likelihoods. Users can combine any number of data types in a single analysis.
 
 Inference in the `integrated` package is enabled by [greta](https://greta-dev.github.io/greta/), which supports a range a approximate or fully Bayesian inference tools. `greta` uses the TensorFlow software library to support fast computation of complex probabilistic models. 
