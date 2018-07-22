@@ -1,13 +1,14 @@
 #' An integrated model object
 #'
-#' @description A \code{integrated_model} object contains a compiled greta model for integrated data analysis
+#' @description An \code{integrated_model} object returns a \link[greta]{greta_array} that can be
+#'  passed to \link[greta]{model}
 #' 
 #' @rdname integrated_model
 #' 
-#' @param ... \code{integrated_data} objects created with \link[integrated]{define_integrated_data}
+#' @param ... \code{integrated_data} objects created with \link[integrated]{integrated_data}
 #'
-#' @return An object of class \code{integrated_model}, which can be passed to
-#'    \link[greta]{mcmc} and has associated `print`, `plot`, and `summary` methods
+#' @return An object of class \code{greta_array}, which can be passed to
+#'    \link[greta]{model} and has associated `print`, `plot`, and `summary` methods
 #' 
 #' @export
 #' 
@@ -18,7 +19,7 @@
 #' library(integrated)
 #' 
 #' # prepare an example model
-#' model <- build_integrated_model()
+#' model <- integrated_model()
 #'                         
 #' \dontrun{                 
 #' # summarise fitted model
@@ -27,7 +28,7 @@
 #' plot(model)
 #' }
 
-build_integrated_model <- function (integrated_process, ...) {
+integrated_model <- function (integrated_process, ...) {
   
   data_modules <- list(...)
   
@@ -45,12 +46,12 @@ build_integrated_model <- function (integrated_process, ...) {
       # it's easy if data and process contain the same number of stages
       if (all(integrated_process$classes == sapply(data_tmp$data, nrow))) {
         
-      # flatten the data set into a vector
-      data <- do.call('c', data_tmp$data)
-
-      # poisson likelihood for observed abundances      
-      greta::distribution(data) <- greta::poisson(data_tmp$data_module)
-      
+        # flatten the data set into a vector
+        data <- do.call('c', data_tmp$data)
+        
+        # poisson likelihood for observed abundances      
+        greta::distribution(data) <- greta::poisson(data_tmp$data_module)
+        
       } else {
         
         # we need to be more careful because data are binned more
@@ -164,7 +165,7 @@ build_integrated_model <- function (integrated_process, ...) {
           }
           
         }
-         
+        
       }
       
     }
@@ -225,9 +226,9 @@ print.integrated_model <- function (x, ...) {
 #' }
 
 plot.integrated_model <- function (x, ...) {
-
+  
   plot(x$greta_model, ...)
-
+  
 }
 
 #' @rdname integrated_model

@@ -1,6 +1,7 @@
 #' An integrated process object
 #'
-#' @description A \code{integrated_process} object contains a component data object for integrated data analysis
+#' @description An \code{integrated_process} object contains the underlying process model
+#'  for an integrated population analysis
 #' 
 #' @rdname integrated_process
 #' 
@@ -12,7 +13,7 @@
 #' @param ... additional arguments
 #'
 #' @return An object of class \code{integrated_process}, which can be passed to
-#'    \link[integrated]{define_integrated_data} and \link[integrated]{build_integrated_model}
+#'    \link[integrated]{integrated_data} and \link[integrated]{integrated_model}
 #' 
 #' @export
 #' 
@@ -24,13 +25,13 @@
 #' library(integrated)
 #' 
 #' # prepare an example model
-#' data <- define_integrated_process(type = 'MPM')
+#' mpm_process <- integrated_process(type = 'MPM')
 
-define_integrated_process <- function (type, classes,
-                                       structure = 'stage',
-                                       density_dependence = 'none',
-                                       replicates = 1,
-                                       params = list()) {
+integrated_process <- function (type, classes,
+                                structure = 'stage',
+                                density_dependence = 'none',
+                                replicates = 1,
+                                params = list()) {
   
   if (!(type %in% c('IPM', 'MPM'))) {
     stop('type must be one of IPM or MPM',
@@ -64,8 +65,8 @@ define_integrated_process <- function (type, classes,
   if (type == 'IPM') {
     
     params <- lapply(seq_len(replicates),
-                     build_integrated_ipm(classes = classes,
-                                          gp_tol = 1e-5))
+                     integrated_ipm(classes = classes,
+                                    gp_tol = 1e-5))
     
     mu_initial <- lapply(seq_len(replicates),
                          function(x) greta::lognormal(meanlog = 0.0,
@@ -77,13 +78,13 @@ define_integrated_process <- function (type, classes,
     parameters$fecundity <- lapply(seq_len(replicates), function(i) params[[i]]$fecundity) 
     parameters$density_parameter <- greta::uniform(min = params_list$density_lower,
                                                    max = params_list$density_upper, dim = 1)
-
+    
     parameters$capture_probability <- lapply(seq_len(replicates),
                                              function(i) greta::uniform(min = params_list$capture_lower,
                                                                         max = params_list$capture_upper,
                                                                         dim = c(classes, 1)))
     structure <- 'IPM'
-
+    
   }
   
   if (type == 'MPM') {
@@ -107,7 +108,7 @@ define_integrated_process <- function (type, classes,
                                              function(i) greta::uniform(min = params_list$capture_lower,
                                                                         max = params_list$capture_upper,
                                                                         dim = c(classes, 1)))
-                                             
+    
   }
   
   integrated_process <- list(parameters = parameters,
@@ -200,7 +201,7 @@ stage <- function (classes, params) {
   survival_tmp <- surv_max * greta::uniform(min = 0, max = 1,
                                             dim = c(classes, classes))
   survival <- greta::sweep(survival_tmp, 2, colSums(survival_tmp), '/')
-
+  
   # fecundity prior
   fec_min <- matrix(0.0, nrow = classes, ncol = classes)
   fec_min[1, classes] <- params$fec_lower
@@ -230,7 +231,7 @@ age <- function (classes, params) {
       surv_max[j + 1, j] <- 1
     }
   }
-
+  
   # standardise survival matrix
   surv_max <- greta::as_data(surv_max)
   survival_vec <- greta::uniform(min = 0, max = 1, dim = c(1, classes))
@@ -272,7 +273,7 @@ unstructured <- function (classes, params) {
                                         dim = c(classes, classes))
   survival <- greta::sweep(survival, 2, colSums(survival), '/')
   survival <- greta::sweep(survival, 2, survival_vec, '*')
-
+  
   # fecundity prior
   fec_min <- matrix(0.0, nrow = classes, ncol = classes)
   fec_min[1, seq_len(classes)[-1]] <- rep(params$fec_lower, times = (classes - 1))
@@ -291,7 +292,7 @@ unstructured <- function (classes, params) {
 }
 
 # internal function: create an IPM evaluated at `classes`
-build_integrated_ipm <- function (classes, gp_tol) {
+integrated_ipm <- function (classes, gp_tol) {
   
   # ipm transition kernel
   ipm_len <- greta::lognormal(mean = 0.0, sd = 1.0, dim = 1)
@@ -325,11 +326,11 @@ build_integrated_ipm <- function (classes, gp_tol) {
   
   # standardise so that columns sum to one
   ipm <- greta::sweep(ipm, 2, greta::colSums(ipm), '/')
-
+  
   params <- list(survival = ipm,
                  survival_vec = ipm_surv,
                  fecundity = ipm_fec)
-    
+  
   params
-   
+  
 }

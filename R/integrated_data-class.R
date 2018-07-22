@@ -1,7 +1,7 @@
 #' An integrated data object
 #'
-#' @description A \code{integrated_model} call adds a component data object to process model
-#'   created with \link[integrated]{define_integrated_process}
+#' @description \code{integrated_data} defines a data object with appropriate likelihood based on
+#'  a process model defined with \link[integrated]{integrated_process}
 #' 
 #' @rdname integrated_data
 #' 
@@ -13,7 +13,7 @@
 #' @param ... additional arguments
 #'
 #' @return An object of class \code{integrated_data}, which contains information on the data module and
-#'   can be passed to a \link[integrated]{integrated_model}
+#'   can be passed to \link[integrated]{integrated_model}
 #' 
 #' @details Do something. The settings list can be used to specify how the data are binned, either with
 #'   specific breaks for binning or with the number of breaks to use. If these are not provided, the 
@@ -30,7 +30,7 @@
 #' library(integrated)
 #' 
 #' # prepare an example model
-#' data <- define_integrated_data()
+#' data <- integrated_data()
 #'                         
 #' \dontrun{                 
 #' # summarise data module
@@ -39,11 +39,11 @@
 #' plot(model)
 #' }
 
-define_integrated_data <- function (data,
-                                    integrated_process, 
-                                    process_link,
-                                    observation_model = 'naive',
-                                    settings = list()) {
+integrated_data <- function (data,
+                             integrated_process, 
+                             process_link,
+                             observation_model = 'naive',
+                             settings = list()) {
   
   if (!(process_link %in% c('individual_growth',
                             'age_abundance',
