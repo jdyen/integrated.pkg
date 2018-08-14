@@ -423,15 +423,11 @@ define_stage_recapture_module <- function (data, integrated_process, observation
     # calculate unique CMR histories and counts of each
     unique_history_vec <- unique(history[[i]])
     unique_history[[i]] <- vector('list', length = length(unique_history_vec))
-    #count[[i]] <- rep(NA, length = length(unique_history_vec))
     count[[i]] <- lapply(seq_len(integrated_process$classes),
                          function(x) rep(0, integrated_process$classes))
     count2[[i]] <- rep(0, integrated_process$classes)
     total[[i]] <- rep(0, integrated_process$classes)
     for (j in seq_along(unique_history_vec)) {
-      # count[[i]][j] <- sum(sapply(history[[i]], function(x) ifelse(length(x) == length(unique_history_vec[[j]]),
-      #                                                              all(x == unique_history_vec[[j]]),
-      #                                                              FALSE)))
       mat_tmp <- c(t(matrix(0, nrow = length(unique_history_vec[[j]]), ncol = integrated_process$classes)))
       mat_tmp[seq(1, length(unique_history_vec[[j]]) * integrated_process$classes,
                   by = integrated_process$classes)[seq_len(length(unique_history_vec[[j]]))] +

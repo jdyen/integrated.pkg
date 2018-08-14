@@ -32,6 +32,9 @@ integrated_model <- function (integrated_process, ...) {
   
   data_modules <- list(...)
   
+  # initialise mu values
+  mu_param <- NULL
+  
   for (i in seq_along(data_modules)) {
     
     data_tmp <- data_modules[[i]]
@@ -51,6 +54,13 @@ integrated_model <- function (integrated_process, ...) {
         
         # poisson likelihood for observed abundances      
         greta::distribution(data) <- greta::poisson(data_tmp$data_module)
+        
+        # store mu values to include in params vector
+        if (is.null(mu_param)) {
+          mu_param <- data_tmp$data_module
+        } else {
+          mu_param <- c(mu_param, data_tmp$data_module)
+        }
         
       } else {
         
@@ -81,6 +91,13 @@ integrated_model <- function (integrated_process, ...) {
         
         # poisson likelihood for observed abundances      
         greta::distribution(data) <- greta::poisson(collapsed_data_module)
+        
+        # store mu values to include in params vector
+        if (is.null(mu_param)) {
+          mu_param <- collapsed_data_module
+        } else {
+          mu_param <- c(mu_param, collapsed_data_module)
+        }
         
       }
       
@@ -177,7 +194,8 @@ integrated_model <- function (integrated_process, ...) {
     do.call('c', integrated_process$parameters$survival_vec),
     do.call('c', integrated_process$parameters$capture_probability),
     do.call('c', integrated_process$mu_initial),
-    do.call('c', integrated_process$parameters$density_parameter))
+    do.call('c', integrated_process$parameters$density_parameter),
+    mu_param)
   
 }
 
