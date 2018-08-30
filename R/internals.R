@@ -1,4 +1,26 @@
-# internal helper functions for trophic R package
+# internal helper functions for integrated R package
+
+# count stages that an individual successfully transitions out of
+count_stages_survived <- function(x, classes) {
+  out <- rep(0, classes)
+  x <- x[x > 0]
+  xsurv <- x[x < max(x)]
+  out[seq_len(classes) %in% xsurv] <- 1
+  out
+}
+
+# count stages that an individual is observed in
+count_stages_lived <- function(x, classes) {
+  out <- rep(0, classes)
+  x <- x[x > 0]
+  out[seq_len(classes) %in% x] <- 1
+  out
+}
+
+# calculate stage at last observation
+calculate_final_stage <- function(x) {
+  x[max(which(x != 0))]
+}
 
 # set an object class
 as_class <- function (object, name, type = c("function", "list")) {
