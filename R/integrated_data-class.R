@@ -450,10 +450,10 @@ define_stage_recapture_module <- function (data, integrated_process, observation
         }
         if (length(ind1) & !(length(ind2))) {
           total[i, ind1] <- total[i, ind1] + 1
-          if (ind1 < (length(count[[i]]) - 1)) {
+          if (ind1 < (integrated_process$classes - 1)) {
             ind1_set <- ind1:(ind1 + 2)
           } else {
-            if (ind1 < length(count[[i]])) {
+            if (ind1 < integrated_process$classes) {
               ind1_set <- ind1:(ind1 + 1)
             } else {
               ind1_set <- ind1
@@ -462,10 +462,10 @@ define_stage_recapture_module <- function (data, integrated_process, observation
           count[[i]][ind1, ind1_set] <- count[[i]][ind1, ind1_set] + 1
         }
         if (!(length(ind1)) & length(ind2)) {
-          if (ind2 < (length(count[[i]]) - 1)) {
+          if (ind2 < (integrated_process$classes - 1)) {
             ind2_set <- (ind2 - 2):ind2
           } else {
-            if (ind2 < length(count[[i]])) {
+            if (ind2 < integrated_process$classes) {
               ind2_set <- (ind2 - 1):ind2
             } else {
               ind2_set <- ind2
@@ -480,13 +480,7 @@ define_stage_recapture_module <- function (data, integrated_process, observation
       }
       
     }
-    ## FIX THIS ROW
-    #count[[i]] <- lapply(count[[i]], function(x) matrix(x, nrow = 1))
-    
-    # count[[i]] <- matrix(count[[i]], nrow = 1)
-    
-    ## COULD RETURN A COUNT OF DETECTED/NOT DETECTED AND THEN UPDATE TOTAL SURVIVAL?
-    
+
   } 
   
   #### ADD history of never recaptured (1 if captured at a later point)
@@ -495,6 +489,7 @@ define_stage_recapture_module <- function (data, integrated_process, observation
   ##   and also to identify size at last capture
   ### ALL OF THIS assumes we focus on apparent survival
   ### ideally would have a latent state for "alive but not recaptured"
+  c
   
   ## DO COUNT OF NUM EVER IN SIZE CLASS vs NUM SURVIVED TO NEXT SIZE CLASS?
   
