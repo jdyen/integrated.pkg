@@ -135,7 +135,7 @@ calculate_capture_history <- function(data, classes, settings) {
     recaptures <- tapply(rep(1, nrow(data[[i]])), data[[i]]$id, sum)
     
     # filter to fish that were recaptured at least once
-    recaptures <- recaptures[recaptures > 1]
+    # recaptures <- recaptures[recaptures > 1]
     
     # pull out the sample dates (years at this stage; go to season/month perhaps)
     times <- sort(unique(data[[i]]$time))
