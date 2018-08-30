@@ -473,9 +473,11 @@ define_stage_recapture_module <- function (data, integrated_process, observation
       
     }
 
-    total[[i]] <- apply(data[[i]]$structured, 1, count_stages_lived, classes = integrated_process$classes)
-    count2[[i]] <- apply(data[[i]]$structured, 1, count_stages_survived, classes = integrated_process$classes)
-    
+    sizes_lived <- apply(data[[i]]$structured, 1, count_stages_lived, classes = integrated_process$classes)
+    total[[i]] <- apply(sizes_lived, 1, sum)
+    sizes_survived <- apply(data[[i]]$structured, 1, count_stages_survived, classes = integrated_process$classes)
+    count2[[i]] <- apply(sizes_survived, 1, sum)
+      
   } 
   
   # collate outputs
