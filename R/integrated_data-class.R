@@ -404,6 +404,8 @@ define_age_recapture_module <- function (data, integrated_process, observation_m
 # internal function: build stage mark-recapture data module
 define_stage_recapture_module <- function (data, integrated_process, observation_model) {
   
+  # can make output counts matrices, then use vectorised mn calls?
+  
   history <- vector('list', length = length(data))
   unique_history <- vector('list', length = length(data))
   count <- vector('list', length = length(data))
