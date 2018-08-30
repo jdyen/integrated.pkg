@@ -409,8 +409,10 @@ define_stage_recapture_module <- function (data, integrated_process, observation
   history <- vector('list', length = length(data))
   unique_history <- vector('list', length = length(data))
   count <- vector('list', length = length(data))
-  count2 <- vector('list', length = length(data))
-  total <- vector('list', length = length(data))
+  # count2 <- vector('list', length = length(data))
+  count2 <- matrix(0, nrow = length(data), ncol = integrated_process$classes)
+  # total <- vector('list', length = length(data))
+  total <- matrix(0, nrow = length(data), ncol = integrated_process$classes)
   
   for (i in seq_along(data)) {
     
@@ -425,10 +427,11 @@ define_stage_recapture_module <- function (data, integrated_process, observation
     # calculate unique CMR histories and counts of each
     unique_history_vec <- unique(history[[i]])
     unique_history[[i]] <- vector('list', length = length(unique_history_vec))
-    count[[i]] <- lapply(seq_len(integrated_process$classes),
-                         function(x) rep(0, integrated_process$classes))
-    count2[[i]] <- rep(0, integrated_process$classes)
-    total[[i]] <- rep(0, integrated_process$classes)
+    # count[[i]] <- lapply(seq_len(integrated_process$classes),
+    #                      function(x) rep(0, integrated_process$classes))
+    count[[i]] <- matrix(0, nrow = integrated_process$classes, ncol = integrated_process$classes)
+    # count2[[i]] <- rep(0, integrated_process$classes)
+    # total[[i]] <- rep(0, integrated_process$classes)
     for (j in seq_along(unique_history_vec)) {
       mat_tmp <- c(t(matrix(0, nrow = length(unique_history_vec[[j]]), ncol = integrated_process$classes)))
       mat_tmp[seq(1, length(unique_history_vec[[j]]) * integrated_process$classes,
@@ -441,12 +444,12 @@ define_stage_recapture_module <- function (data, integrated_process, observation
         ind1 <- which(unique_history[[i]][[j]][(k - 1), ] != 0)
         ind2 <- which(unique_history[[i]][[j]][k, ] != 0)
         if (length(ind1) & length(ind2)) {
-          count[[i]][[ind1]][ind2] <- count[[i]][[ind1]][ind2] + 1
-          count2[[i]][ind1] <- count2[[i]][ind1] + 1
-          total[[i]][ind1] <- total[[i]][ind1] + 1
+          count[[i]][ind1, ind2] <- count[[i]][ind1, ind2] + 1
+          count2[i, ind1] <- count2[i, ind1] + 1
+          total[i, ind1] <- total[i, ind1] + 1
         }
         if (length(ind1) & !(length(ind2))) {
-          total[[i]][ind1] <- total[[i]][ind1] + 1
+          total[i, ind1] <- total[i, ind1] + 1
           if (ind1 < (length(count[[i]]) - 1)) {
             ind1_set <- ind1:(ind1 + 2)
           } else {
@@ -456,7 +459,7 @@ define_stage_recapture_module <- function (data, integrated_process, observation
               ind1_set <- ind1
             }
           }
-          count[[i]][[ind1]][ind1_set] <- count[[i]][[ind1]][ind1_set] + 1
+          count[[i]][ind1, ind1_set] <- count[[i]][ind1, ind1_set] + 1
         }
         if (!(length(ind1)) & length(ind2)) {
           if (ind2 < (length(count[[i]]) - 1)) {
@@ -468,22 +471,32 @@ define_stage_recapture_module <- function (data, integrated_process, observation
               ind2_set <- ind2
             }
           }
-          count2[[i]][ind2_set] <- count2[[i]][ind2_set] + 1
-          total[[i]][ind2_set] <- total[[i]][ind2_set] + 1
+          count2[i, ind2_set] <- count2[i, ind2_set] + 1
+          total[i, ind2_set] <- total[i, ind2_set] + 1
           for (kk in seq_along(ind2_set)) {
-            count[[i]][[ind2_set[kk]]][ind2] <- count[[i]][[ind2_set[kk]]][ind2] + 1
+            count[[i]][ind2_set[kk], ind2] <- count[[i]][ind2_set[kk], ind2] + 1
           }
         }
       }
       
     }
-    count[[i]] <- lapply(count[[i]], function(x) matrix(x, nrow = 1))
+    ## FIX THIS ROW
+    #count[[i]] <- lapply(count[[i]], function(x) matrix(x, nrow = 1))
     
     # count[[i]] <- matrix(count[[i]], nrow = 1)
     
     ## COULD RETURN A COUNT OF DETECTED/NOT DETECTED AND THEN UPDATE TOTAL SURVIVAL?
     
   } 
+  
+  #### ADD history of never recaptured (1 if captured at a later point)
+  ## apply(structured, 1, function(x) max(which(x != 0)))
+  ## THIS gives index, which can be used to create new mat
+  ##   and also to identify size at last capture
+  ### ALL OF THIS assumes we focus on apparent survival
+  ### ideally would have a latent state for "alive but not recaptured"
+  
+  ## DO COUNT OF NUM EVER IN SIZE CLASS vs NUM SURVIVED TO NEXT SIZE CLASS?
   
   # collate outputs
   cmr_module <- list(history = unique_history,

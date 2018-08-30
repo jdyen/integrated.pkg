@@ -107,17 +107,7 @@ make_pop_data_matrix <- function(data, classes, settings) {
 
 # internal function: calculate structured capture history from long-format data
 calculate_capture_history <- function(data, classes, settings) {
-  
-  #### ADD history of never recaptured (1 if captured at a later point)
-  ## apply(structured, 1, function(x) max(which(x != 0)))
-  ## THIS gives index, which can be used to create new mat
-  ##   and also to identify size at last capture
-  ### ALL OF THIS assumes we focus on apparent survival
-  ### ideally would have a latent state for "alive but not recaptured"
 
-  ## DO THIS FIRST: others can be post-processed
-  #### ADD individuals sampled at one time point only
-  
   # unpack settings
   matrix_set <- list(nbreaks = NULL,
                      breaks = NULL)
