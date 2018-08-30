@@ -144,13 +144,19 @@ integrated_model <- function (integrated_process, ...) {
           
           greta::distribution(data_tmp$data_module$count[[i]]) <-
             greta::multinomial(size = rowSums(data_tmp$data_module$count[[i]]),
-                               prob = integrated_process$parameters$survival[[integrated_process$replicate_id[i]]])
+                               prob = t(integrated_process$parameters$survival[[integrated_process$replicate_id[i]]]))
+          greta::distribution(data_tmp$data_module$count2[[i]]) <-
+            greta::binomial(size = data_tmp$data_module$total[[i]],
+                            prob = integrated_process$parameters$survival_vec[[integrated_process$replicate_id[i]]])
 
         } else {  
           
           greta::distribution(data_tmp$data_module$count[[i]]) <-
             greta::multinomial(size = rowSums(data_tmp$data_module$count[[i]]),
-                               prob = integrated_process$parameters$survival[[1]])
+                               prob = t(integrated_process$parameters$survival[[1]]))
+          greta::distribution(data_tmp$data_module$count2[[i]]) <-
+            greta::binomial(size = data_tmp$data_module$total[[i]],
+                            prob = integrated_process$parameters$survival_vec[[1]])
 
         }
         
