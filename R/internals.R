@@ -6,8 +6,8 @@ count_stages_survived <- function(x, classes) {
   xpos <- x[x > 0]
   xsurv <- xpos[xpos < max(xpos)]
   out[seq_len(classes) %in% xsurv] <- 1
-  if (x[length(x)] == max(x))
-    out[max(x)] <- 1
+  tmp_var <- runif(classes)
+  out[tmp_var < seq(0.3, 1, length = classes)] <- 1
   out
 }
 
