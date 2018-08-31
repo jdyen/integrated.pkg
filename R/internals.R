@@ -7,7 +7,8 @@ count_stages_survived <- function(x, classes) {
   xsurv <- xpos[xpos < max(xpos)]
   out[seq_len(classes) %in% xsurv] <- 1
   tmp_var <- runif(classes)
-  out[tmp_var < seq(0.3, 1, length = classes)] <- ifelse(seq_len(classes) %in% xpos, 1, 0)
+  out[tmp_var < seq(0.3, 1, length = classes)] <-
+    ifelse(seq_len(classes) %in% xpos, 1, 0)[tmp_var < seq(0.3, 1, length = classes)]
   out
 }
 
