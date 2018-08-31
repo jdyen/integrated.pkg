@@ -113,16 +113,14 @@ integrated_model <- function (integrated_process, ...) {
           
           greta::distribution(data_tmp$data_module[[i]]) <-
             greta::multinomial(size = rowSums(data_tmp$data_module[[i]]),
-                               prob = t(integrated_process$parameters$survival[[1]]),
-                               dim = 1)
+                               prob = t(integrated_process$parameters$survival[[1]]))
           
         } else {
           
           # otherwise there must be one process matrix for each data element
           greta::distribution(data_tmp$data_module[[i]]) <-
             greta::multinomial(size = rowSums(data_tmp$data_module[[i]]),
-                               prob = t(integrated_process$parameters$survival[[integrated_process$replicate_id[i]]]),
-                               dim = 1)
+                               prob = t(integrated_process$parameters$survival[[integrated_process$replicate_id[i]]]))
           
         }
         
