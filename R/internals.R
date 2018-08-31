@@ -3,9 +3,11 @@
 # count stages that an individual successfully transitions out of
 count_stages_survived <- function(x, classes) {
   out <- rep(0, classes)
-  x <- x[x > 0]
-  xsurv <- x[x < max(x)]
+  xpos <- x[x > 0]
+  xsurv <- xpos[xpos < max(xpos)]
   out[seq_len(classes) %in% xsurv] <- 1
+  if (x[length(x)] == max(x))
+    out[max(x)] <- 1
   out
 }
 
