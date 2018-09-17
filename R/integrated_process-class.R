@@ -186,15 +186,48 @@ as.integrated_process <- function (model) {
 stage <- function (classes, params) {
   
   # survival prior
-  surv_max <- matrix(0.0001, nrow = classes, ncol = classes)
-  diag(surv_max) <- 1
-  for (j in seq_len(classes)) {
-    if (j < classes) {
-      surv_max[j + 1, j] <- 1
-      if (j < (classes - 1)) {
-        surv_max[j + 2, j] <- 1
-      }
-    } 
+  if (is.matrix(params$surv_mat_param1)) {
+    if (ncol(params$surv_mat_param1) != nrow(params$surv_mat_param1)) {
+      stop('number of columns in matrix survival parameters must match number of rows',
+           call. = FALSE)
+    }
+    if (ncol(params$surv_mat_param1) != classes) {
+      stop('number of columns and rows in matrix survival parameters must match number of classes',
+           call. = FALSE)
+    }
+    surv_mat_param1 <- params$surv_mat_param2
+  } else {
+    if (length(params$surv_mat_param1) != 1) {
+      stop('matrix survival parameters must be a matrix or scalar value',
+           call. = FALSE)
+    }
+    surv_mat_param1 <- matrix(params$surv_mat_param1, nrow = classes, ncol = classes)
+  }
+  if (is.matrix(params$surv_mat_param2)) {
+    if (ncol(params$surv_mat_param2) != nrow(params$surv_mat_param2)) {
+      stop('number of columns in matrix survival parameters must match number of rows',
+           call. = FALSE)
+    }
+    if (ncol(params$surv_mat_param2) != classes) {
+      stop('number of columns and rows in matrix survival parameters must match number of classes',
+           call. = FALSE)
+    }
+    surv_mat_param2 <- params$surv_mat_param2
+  } else {
+    if (length(params$surv_mat_param1) != 1) {
+      stop('matrix survival parameters must be a matrix or scalar value',
+           call. = FALSE)
+    }
+    surv_mat_param2 <- matrix(1e6, nrow = classes, ncol = classes)
+    diag(surv_mat_param2) <- params$surv_mat_param2
+    for (j in seq_len(classes)) {
+      if (j < classes) {
+        surv_mat_param2[j + 1, j] <- params$surv_mat_param2
+        if (j < (classes - 1)) {
+          surv_mat_param2[j + 2, j] <- params$surv_mat_param2
+        }
+      } 
+    }
   }
   
   # unpack survival parameters
@@ -214,8 +247,7 @@ stage <- function (classes, params) {
   # standardise survival matrix
   survival_vec <- greta::beta(shape1 = surv_param1, shape2 = surv_param2)
   surv_max <- greta::as_data(surv_max)
-  survival_tmp <- surv_max * greta::uniform(min = 0, max = 1,
-                                            dim = c(classes, classes))
+  survival_tmp <- greta::beta(shape1 = surv_mat_params1, shape2 = surv_mat_params2)
   survival <- greta::sweep(survival_tmp, 2, colSums(survival_tmp), '/')
   
   # fecundity prior
