@@ -250,7 +250,7 @@ stage <- function (classes, params) {
 
   # standardise survival matrix
   survival_vec <- greta::beta(shape1 = surv_param1, shape2 = surv_param2)
-  survival_tmp <- greta::beta(shape1 = surv_mat_params1, shape2 = surv_mat_params2)
+  survival_tmp <- greta::beta(shape1 = surv_mat_param1, shape2 = surv_mat_param2)
   survival <- greta::sweep(survival_tmp, 2, colSums(survival_tmp), '/')
   
   # fecundity prior
