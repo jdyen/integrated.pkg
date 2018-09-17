@@ -53,6 +53,8 @@ integrated_process <- function (type, classes,
   # fill params_list
   params_list <- list(fec_lower = 0,
                       fec_upper = 1000,
+                      surv_param1 = 1,
+                      surv_param2 = 1,
                       density_lower = 0.999,
                       density_upper = 1.001,
                       capture_lower = 0.999,
@@ -195,8 +197,22 @@ stage <- function (classes, params) {
     } 
   }
   
+  # unpack survival parameters
+  surv_param1 <- rep(1, classes)
+  surv_param2 <- rep(1, classes)
+  if (!is.null(params$surv_param1)) {
+    if (length(params$surv_param1) == 1)
+      params$surv_param1 <- rep(params$surv_param1, classes)
+    surv_param1 <- params$surv_param1
+  }
+  if (!is.null(params$surv_param2)) {
+    if (length(params$surv_param2) == 1)
+      params$surv_param2 <- rep(params$surv_param2, classes)
+    surv_param2 <- params$surv_param2
+  }
+
   # standardise survival matrix
-  survival_vec <- greta::uniform(min = 0, max = 1, dim = c(classes, 1))
+  survival_vec <- greta::beta(shape1 = surv_param1, shape2 = surv_param2)
   surv_max <- greta::as_data(surv_max)
   survival_tmp <- surv_max * greta::uniform(min = 0, max = 1,
                                             dim = c(classes, classes))
