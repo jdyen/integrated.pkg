@@ -63,6 +63,8 @@ integrated_process <- function (type, classes,
                       capture_upper = 1.0)
   params_list[names(params)] <- params
   
+  ### ADD A "CHECK_PARAMETERS" FUNCTION?
+  
   # initialise empty parameters list
   parameters <- list()
   
@@ -248,7 +250,6 @@ stage <- function (classes, params) {
 
   # standardise survival matrix
   survival_vec <- greta::beta(shape1 = surv_param1, shape2 = surv_param2)
-  surv_max <- greta::as_data(surv_max)
   survival_tmp <- greta::beta(shape1 = surv_mat_params1, shape2 = surv_mat_params2)
   survival <- greta::sweep(survival_tmp, 2, colSums(survival_tmp), '/')
   
