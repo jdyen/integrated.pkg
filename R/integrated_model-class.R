@@ -5,7 +5,7 @@
 #' 
 #' @rdname integrated_model
 #' 
-#' @param ... \code{integrated_data} objects created with \link[integrated]{integrated_data}
+#' @param ... \code{process} objects created with \link[integrated]{process}
 #'
 #' @return An object of class \code{greta_array}, which can be passed to
 #'    \link[greta]{model} and has associated `print`, `plot`, and `summary` methods
@@ -28,7 +28,7 @@
 #' plot(model)
 #' }
 
-integrated_model <- function (integrated_process, ...) {
+define_model <- function (process, ...) {
   
   data_modules <- list(...)
   

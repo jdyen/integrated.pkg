@@ -27,6 +27,14 @@
 #' # prepare an example model
 #' mpm_process <- integrated_process(type = 'MPM')
 
+# options:
+#   top ones are more flexible (others can define their own)
+leslie (classes, density = "none", replicates = 1, params = list())
+lefkovitch (classes, density = "none", replicates = 1, params = list())
+ipm (classes, density = "none", replicates = 1, params = list())
+process (classes, type, structure = "leslie", density = "none", replicates = 1, params = list())
+set_process (classes, type, structure = "leslie", density = "none", replicates = 1, params = list())
+
 integrated_process <- function (type, classes,
                                 structure = 'stage',
                                 density_dependence = 'none',
@@ -63,7 +71,24 @@ integrated_process <- function (type, classes,
                       capture_upper = 1.0)
   params_list[names(params)] <- params
   
-  ### ADD A "CHECK_PARAMETERS" FUNCTION?
+  # check dimensions and classes of parameters
+  test_params <- check_params(params_list, classes)
+  if (test_params$length_error)
+    stop('fecundity, density, and capture probabilities should be scalar values', call. = FALSE)
+  if (test_params$dim_error)
+    stop(paste0('survival parameters should be scalar values or vectors with ', classes, ' elements'), call. = FALSE)
+  if (test_params$vec_error)
+    stop(paste0('survival matrix parameters should be scalar values or matrices with ', classes, ' rows and columns'), call. = FALSE)
+  if (test_params$class_error)
+    stop('all parameters should be scalar, vector, or matrix numeric objects', call. = FALSE)
+  
+  ### pass distrbns not params (include params in dist call)
+  # prior_list <- list(fecundity = greta::uniform(min = 0, max = 1000, dim = 1),
+  #                    survival = greta::beta(shape1 = 1, shape2 = 1, dim = 1)
+  #                    class_survival = greta::beta(shape1 = 1, shape2 = 1, dim = 1),
+  #                    density_dependence = greta::uniform(min = 0, max = 2, dim = 1),
+  #                    capture_probability = greta::uniform(min = 0, max = 1, dim = 1))
+  # # but need to expand dimensions of each
   
   # initialise empty parameters list
   parameters <- list()
