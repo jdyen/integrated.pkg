@@ -1,45 +1,171 @@
-#' An integrated process object
+#' @name integrated_process
+#' @title create integrated process objects
 #'
-#' @description An \code{integrated_process} object contains the underlying process model
-#'  for an integrated population analysis
+#' @description An \code{integrated_process} object contains the underlying
+#'   process model for an integrated population analysis
 #' 
-#' @rdname integrated_process
-#' 
-#' @param type something
-#' @param structure something
 #' @param classes something
-#' @param density_dependence something
+#' @param density something
 #' @param replicates number of distinct populations
+#' @param params named list of parameters
 #' @param ... additional arguments
+#'
+#' @details something
 #'
 #' @return An object of class \code{integrated_process}, which can be passed to
 #'    \link[integrated]{integrated_data} and \link[integrated]{integrated_model}
 #' 
-#' @export
-#' 
 #' @import greta
-#' @import greta.gp
 #' 
 #' @examples
+#' \dontrun {
 #' 
 #' library(integrated)
 #' 
 #' # prepare an example model
-#' mpm_process <- integrated_process(type = 'MPM')
+#' mpm_process <- leslie(5, density = "none", replicates = 3)
+#' }
 
-# options:
-#   top ones are more flexible (others can define their own)
-leslie (classes, density = "none", replicates = 1, params = list())
-lefkovitch (classes, density = "none", replicates = 1, params = list())
-ipm (classes, density = "none", replicates = 1, params = list())
-process (classes, type, structure = "leslie", density = "none", replicates = 1, params = list())
-set_process (classes, type, structure = "leslie", density = "none", replicates = 1, params = list())
 
-integrated_process <- function (type, classes,
-                                structure = 'stage',
-                                density_dependence = 'none',
-                                replicates = 1,
-                                params = list()) {
+#' @export
+#' @rdname integrated_process
+#' 
+leslie <- function(classes, density = "none", params = list()) {
+  
+  # set type
+  type <- "leslie"
+  
+  # initialise model parameters
+  ## WHAT'S A BETTER WAY TO SET LINKS?
+  param_list <- list(density = uniform(0, 1),
+                     density_link = "identity",
+                     reproductive = max(classes),
+                     survival = beta(1, 1),
+                     survival_link = "identity",
+                     fecundity = normal(0, 10, truncation = c(0, Inf)),
+                     fecundity_link = "identity",
+                     initials = normal(0, 10, truncation = c(0, Inf)),
+                     random = normal(0, 10, truncation = c(0, Inf)))
+  param_list[names(params)] <- params
+
+  # do the link functions make sense?
+  # e.g. check if gaussian with identity for probabs
+  #   (important for surv/growth probabs)
+  
+  # update check_params function to test dists  
+  test_params <- check_params(param_list, classes)
+  # dims of each term should be 1 (expanded) or classes
+  # all elements should be greta arrays with distributions
+
+  # how many observations and predictor variables?
+  nfec <- length(param_list$reproductive)
+
+  # collate and return outputs  
+  process <- list(type = type,
+                  classes = classes,
+                  density = density,
+                  params = param_list)
+  
+  # return outputs
+  as.integrated_process(process)
+
+}
+
+#' @export
+#' @rdname integrated_process
+#' 
+lefkovitch <- function(classes, density = "none", params = list()) {
+  
+  # set type
+  type <- "lefkovitch"
+  
+  # initialise model parameters
+  param_list <- list(density = uniform(0, 1),
+                     density_link = "identity",
+                     reproductive = max(classes),
+                     survival = beta(1, 1),
+                     survival_link = "identity",
+                     growth = beta(1, 1),
+                     growth_link = "identity",
+                     fecundity = normal(0, 10, truncation = c(0, Inf)),
+                     fecundity_link = "identity",
+                     initials = normal(0, 10, truncation = c(0, Inf)),
+                     random = normal(0, 10, truncation = c(0, Inf)))
+  param_list[names(params)] <- params
+  
+  # update check_params function to test dists  
+  test_params <- check_params(param_list, classes)
+  # dims of each term should be 1 (expanded) or classes
+  # all elements should be greta arrays with distributions
+  
+  # how many observations and predictor variables?
+  nfec <- length(param_list$reproductive)
+  
+  # collate and return outputs  
+  process <- list(type = type,
+                  classes = classes,
+                  density = density,
+                  params = param_list)
+  
+  # return outputs
+  as.integrated_process(process)
+  
+}
+
+#' @export
+#' @rdname integrated_process
+#' 
+ipm <- function(classes, density = "none", params = list()) {
+  
+  # set type
+  type <- "ipm"
+  
+  # will default params work for ipm setup?
+  
+  # should we warn that classes is now computational not process-based?
+  
+  # initialise model parameters
+  param_list <- list(density = uniform(0, 1),
+                     density_link = "identity",
+                     reproductive = max(classes),
+                     survival = beta(1, 1),
+                     survival_link = "identity",
+                     growth = beta(1, 1),
+                     growth_link = "identity",
+                     fecundity = normal(0, 10, truncation = c(0, Inf)),
+                     fecundity_link = "identity",
+                     initials = normal(0, 10, truncation = c(0, Inf)),
+                     random = normal(0, 10, truncation = c(0, Inf)))
+  param_list[names(params)] <- params
+  
+  # update check_params function to test dists  
+  test_params <- check_params(param_list, classes)
+  # dims of each term should be 1 (expanded) or classes
+  # all elements should be greta arrays with distributions
+  
+  # how many observations and predictor variables?
+  nfec <- length(param_list$reproductive)
+  
+  # collate and return outputs  
+  process <- list(type = type,
+                  classes = classes,
+                  density = density,
+                  params = param_list)
+  
+  # set class
+  process <- as.integrated_process(process)
+  
+  # return outputs
+  as.integrated_process(process)
+  
+}
+
+
+integrated_process <- function(type, classes,
+                               structure = 'stage',
+                               density_dependence = 'none',
+                               replicates = 1,
+                               params = list()) {
   
   if (!(type %in% c('IPM', 'MPM'))) {
     stop('type must be one of IPM or MPM',

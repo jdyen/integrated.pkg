@@ -1,53 +1,107 @@
-#' Creata an integrated data object
-#'
+#' @name integrated_data
+#' @title create integrated data objects
+#' 
 #' @description \code{integrated_data} defines a data object with appropriate likelihood based on
 #'  a process model defined with \link[integrated]{integrated_process}
 #' 
-#' @rdname add_data
-#' 
 #' @param data something
-#' @param integrated_process something
-#' @param process_link something
-#' @param observation_model something else
+#' @param process something
+#' @param bias something else
 #' @param settings a named list of settings passed to data formatting functions (see details)
 #' @param ... additional arguments
 #'
-#' @return An object of class \code{integrated_data}, which contains information on the data module and
-#'   can be passed to \link[integrated]{integrated_model}
-#' 
 #' @details Do something. The settings list can be used to specify how the data are binned, either with
 #'   specific breaks for binning or with the number of breaks to use. If these are not provided, the 
 #'   functions use the \code{classes} argument in the \code{integrated_process} to determine the number
 #'   of bins (\code{nbreaks = classes + 1}).
 #' 
-#' @export
+#' @return An object of class \code{integrated_data}, which contains information on the data module and
+#'   can be passed to \link[integrated]{integrated_model}
 #' 
 #' @import greta
-#' @import greta.dynamics
 #' 
 #' @examples
+#' \dontrun{
 #' 
 #' library(integrated)
 #' 
 #' # prepare an example model
 #' data <- add_data()
 #'                         
-#' \dontrun{                 
 #' # summarise data module
 #' model
 #' summary(model)
 #' plot(model)
 #' }
 
-# DON'T define greta terms yet; make it adaptable up until
-#   model compilation
-
-add_data <- function (data,
-                      integrated_process, 
-                      process_link,
-                      observation_model = "naive",
+#' @export
+#' @rdname integrated_data
+#' 
+abundance <- function(data,
+                      process,
+                      bias,
                       settings = list()) {
   
+  # prepare abund matrix
+  
+  # match dims and classes to work out if it's pop or class
+
+  # use process to determine whether it's stage or age (warn)
+  
+  
+  # return outputs
+  as.integrated_data(data_module)
+  
+}
+
+#' @export
+#' @rdname integrated_data
+#' 
+cmr <- function(data,
+                process,
+                bias,
+                settings = list()) {
+  
+  # prepare cmr histories
+  
+  # return outputs
+  as.integrated_data(data_module)
+  
+} 
+
+
+#' @export
+#' @rdname integrated_data
+#' 
+growth <- function(data,
+                   process,
+                   bias,
+                   settings = list()) {
+  
+  # prepare cmr histories
+  
+  # return outputs
+  as.integrated_data(data_module)
+  
+}   
+
+#' @export
+#' @rdname integrated_data
+#' 
+community <- function(data,
+                      process,
+                      bias,
+                      settings = list()) {
+  
+  # prepare cmr histories
+  
+  # return outputs
+  as.integrated_data(data_module)
+  
+}  
+
+function () {
+
   if (!(process_link %in% c("individual_growth",
                             "age_abundance",
                             "stage_abundance",
@@ -268,7 +322,7 @@ add_data <- function (data,
 #' is.integrated_data(model)
 #' }
 
-is.integrated_data <- function (model) {
+is.integrated_data <- function(model) {
   inherits(model, integrated_data)
 }
 
@@ -284,7 +338,7 @@ is.integrated_data <- function (model) {
 #' print(x)
 #' }
 
-print.integrated_data <- function (x, ...) {
+print.integrated_data <- function(x, ...) {
   cat(paste0(This is an integrated_data object\n))
 }
 
@@ -300,7 +354,7 @@ print.integrated_data <- function (x, ...) {
 #' plot(x)
 #' }
 
-plot.integrated_data <- function (x, ...) {
+plot.integrated_data <- function(x, ...) {
   
   plot(x$greta_model, ...)
   
@@ -318,7 +372,7 @@ plot.integrated_data <- function (x, ...) {
 #' summary(x)
 #' }
 
-summary.integrated_data <- function (object, ...) {
+summary.integrated_data <- function(object, ...) {
   
   NULL
   
@@ -326,7 +380,7 @@ summary.integrated_data <- function (object, ...) {
 
 
 # internal function: create integrated_data object
-as.integrated_data <- function (model) {
+as.integrated_data <- function(model) {
   as_class(model, name = integrated_data, type = list)
 }
 

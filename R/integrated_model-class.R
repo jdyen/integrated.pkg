@@ -1,11 +1,13 @@
-#' An integrated model object
+#' @name integrated_model
+#' @title create integrated model objects
 #'
 #' @description An \code{integrated_model} object returns a \link[greta]{greta_array} that can be
 #'  passed to \link[greta]{model}
 #' 
-#' @rdname integrated_model
-#' 
-#' @param ... \code{process} objects created with \link[integrated]{process}
+#' @param process an \code{integrated_process} object
+#' @param ... \code{integrated_data} objects 
+#'
+#' @details something
 #'
 #' @return An object of class \code{greta_array}, which can be passed to
 #'    \link[greta]{model} and has associated `print`, `plot`, and `summary` methods
@@ -15,22 +17,28 @@
 #' @import greta
 #' 
 #' @examples
+#' \dontrun{
 #' 
 #' library(integrated)
 #' 
 #' # prepare an example model
 #' model <- integrated_model()
 #'                         
-#' \dontrun{                 
 #' # summarise fitted model
 #' model
 #' summary(model)
 #' plot(model)
 #' }
 
-define_model <- function (process, ...) {
-  
+#' @export
+#' @rdname integrated_data
+#' 
+integrated_model <- function(process, ...) {
+
   data_modules <- list(...)
+  
+  # have to add greta array setup here
+  ###
   
   # initialise mu values
   mu_param <- NULL
@@ -159,6 +167,7 @@ define_model <- function (process, ...) {
     
   } 
   
+  ### FIND A BETTER WAY TO NAME PARAMS FOR LATER USE
   c(do.call('c', integrated_process$parameters$survival),
     do.call('c', integrated_process$parameters$fecundity),
     do.call('c', integrated_process$parameters$survival_vec),
