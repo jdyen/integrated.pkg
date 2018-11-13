@@ -9,6 +9,8 @@
 #' @param bias something else
 #' @param settings a named list of settings passed to data formatting functions (see details)
 #' @param ... additional arguments
+#' @param x
+#' @param object
 #'
 #' @details Do something. The settings list can be used to specify how the data are binned, either with
 #'   specific breaks for binning or with the number of breaks to use. If these are not provided, the 
@@ -48,6 +50,9 @@ abundance <- function(data,
 
   # use process to determine whether it's stage or age (warn)
   
+  data_module <- abundance_module(data = data,
+                                  process = process, 
+                                  bias = bias)
   
   # return outputs
   as.integrated_data(data_module)
@@ -310,68 +315,32 @@ function () {
   
 } 
 
-#" @rdname integrated_data
-#'
 #' @export
+#' @rdname integrated_data
 #' 
-#' @examples
-#'
-#' # check if an object is an integrated_data object
-#'   
-#' \dontrun{
-#' is.integrated_data(model)
-#' }
-
-is.integrated_data <- function(model) {
+is.integrated_data <- function(x) {
   inherits(model, integrated_data)
 }
 
-#' @rdname integrated_data
-#'
 #' @export
-#'
-#' @examples
+#' @rdname integrated_data
 #' 
-#' # Print information about an 'integrated_data' object
-#'
-#' \dontrun{
-#' print(x)
-#' }
-
 print.integrated_data <- function(x, ...) {
   cat(paste0(This is an integrated_data object\n))
 }
 
-#' @rdname integrated_data
-#'
 #' @export
-#'
-#' @examples
+#' @rdname integrated_data
 #' 
-#' # Plot an 'integrated_data' object
-#'
-#' \dontrun{
-#' plot(x)
-#' }
-
 plot.integrated_data <- function(x, ...) {
   
   plot(x$greta_model, ...)
   
 }
 
-#' @rdname integrated_data
-#'
 #' @export
-#'
-#' @examples
+#' @rdname integrated_data
 #' 
-#' # Summarise an 'integrated_data' object
-#'
-#' \dontrun{
-#' summary(x)
-#' }
-
 summary.integrated_data <- function(object, ...) {
   
   NULL

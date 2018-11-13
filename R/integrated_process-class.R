@@ -9,6 +9,8 @@
 #' @param replicates number of distinct populations
 #' @param params named list of parameters
 #' @param ... additional arguments
+#' @param x
+#' @param object
 #'
 #' @details something
 #'
@@ -281,51 +283,24 @@ integrated_process <- function(type, classes,
   
 }
 
-#' @rdname integrated_process
-#'
 #' @export
+#' @rdname integrated_process
 #' 
-#' @examples
-#'
-#' # check if an object is an integrated_process object
-#'   
-#' \dontrun{
-#' is.integrated_process(model)
-#' }
-
-is.integrated_process <- function (model) {
+is.integrated_process <- function(x) {
   inherits(model, 'integrated_process')
 }
 
-#' @rdname integrated_process
-#'
 #' @export
-#'
-#' @examples
+#' @rdname integrated_process
 #' 
-#' # Print information about an 'integrated_process' object
-#'
-#' \dontrun{
-#' print(x)
-#' }
-
-print.integrated_process <- function (x, ...) {
+print.integrated_process <- function(x, ...) {
   cat(paste0('This is an integrated_process object\n'))
 }
 
-#' @rdname integrated_process
-#'
 #' @export
-#'
-#' @examples
+#' @rdname integrated_process
 #' 
-#' # Summarise an 'integrated_process' object
-#'
-#' \dontrun{
-#' summary(x)
-#' }
-
-summary.integrated_process <- function (object, ...) {
+summary.integrated_process <- function(object, ...) {
   
   NULL
   

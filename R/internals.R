@@ -116,3 +116,71 @@ check_params <- function(params, classes) {
        dim_error = dim_mismatch)
   
 }
+
+get_node <- greta:::get_node
+
+# expand dimensions of prior distributions to match data
+expand_prior <- function(prior, new_dim) {
+  
+  # I want the good bits from the prior
+  node <- get_node(prior)
+  
+  # which distribution am I dealing with?
+  distribution_name <- node$distribution$distribution_name
+  
+  # which distributions are not OK?
+  discrete <- c("bernoulli", "binomial", "negative_binomial", "poisson",
+                "multinomial", "categorical", "dirichlet_multinomial")
+  too_hard <- "wishart_distribution"
+  
+  # is this distribution ok?
+  if (distribution_name %in% discrete)
+    stop(paste0("unable to set discrete (", distribution_name, ") distribution as a prior"), call. = FALSE)
+  if (distribution_name %in% too_hard)
+    stop(paste0("unable to set ", distribution_name, " distribution as a prior"), call. = FALSE)
+  
+  # is the distribution truncated?
+  lower <- node$lower
+  upper <- node$upper
+  
+  # what are its parameters?
+  params <- lapply(node$distribution$parameters, function(x) greta:::as.greta_array(x))
+  
+  # if it's uniform, we need to turn params back to numerics
+  if (distribution_name == "uniform")
+    params <- lapply(params, function(x) as.numeric(x))
+  
+  # what are the arguments required for this distribution?
+  arglist <- names(formals(node$initialize))
+  
+  # we need to add a new dim argument to univariate parameters
+  if (!(distribution_name %in% c("multivariate_normal", "dirichlet"))) {
+    params$dim <- new_dim
+  } else {
+    if (length(new_dim) > 1)
+      stop("unable to expand a multivariate distribution in two dimensions", call. = FALSE)
+    params$n_realisations <- new_dim
+  }
+  
+  # the f distribution's name is "d" for some reason
+  if (distribution_name == "d")
+    distribution_name <- "f"
+  
+  # do we also need to truncate the distribution?
+  if ("truncation" %in% arglist)
+    params$truncation <- c(lower, upper)
+  
+  # now we need a new distribution with these parameters
+  new_prior <- do.call(distribution_name, params)
+  
+  # we need the new node so we can cut it off from the old prior distribution
+  new_node <- get_node(new_prior)
+  
+  # remove original variable greta array
+  for (i in seq_along(node$distribution$parameters))
+    node$distribution$parameters[[i]]$remove_parent(new_node)
+
+  # return a new prior with expanded dims
+  new_prior
+  
+}

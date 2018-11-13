@@ -6,6 +6,8 @@
 #' 
 #' @param process an \code{integrated_process} object
 #' @param ... \code{integrated_data} objects 
+#' @param x an \code{integrated_model} object
+#' @param object an \code{integrated_model} object
 #'
 #' @details something
 #'
@@ -19,6 +21,8 @@
 #' @examples
 #' \dontrun{
 #' 
+#' ### ADD EXAMPLES OF ALL FUNCTIONS HERE
+#' 
 #' library(integrated)
 #' 
 #' # prepare an example model
@@ -31,12 +35,19 @@
 #' }
 
 #' @export
-#' @rdname integrated_data
+#' @rdname integrated_model
 #' 
-integrated_model <- function(process, ...) {
+integrated_model <- function(...) {
 
   data_modules <- list(...)
-  
+
+  # check process models are all the same
+  ## NEED A STRING FOR THIS?
+  process_list <- sapply(data_modules, extract_process)
+  if (length(unique(process_list) > 1))
+    stop(paste0("data are connected to ", length(unique(process_list)), " different processes"), call. = FALSE)
+    
+  process <- process_list[1]
   # have to add greta array setup here
   ###
   
@@ -168,79 +179,43 @@ integrated_model <- function(process, ...) {
   } 
   
   ### FIND A BETTER WAY TO NAME PARAMS FOR LATER USE
-  c(do.call('c', integrated_process$parameters$survival),
-    do.call('c', integrated_process$parameters$fecundity),
-    do.call('c', integrated_process$parameters$survival_vec),
-    do.call('c', integrated_process$parameters$capture_probability),
-    do.call('c', integrated_process$mu_initial),
-    do.call('c', integrated_process$parameters$density_parameter),
+  c(do.call(c, integrated_process$parameters$survival),
+    do.call(c, integrated_process$parameters$fecundity),
+    do.call(c, integrated_process$parameters$survival_vec),
+    do.call(c, integrated_process$parameters$capture_probability),
+    do.call(c, integrated_process$mu_initial),
+    do.call(c, integrated_process$parameters$density_parameter),
     mu_param)
   
 }
 
-#' @rdname integrated_model
-#'
 #' @export
+#' @rdname integrated_model
 #' 
-#' @examples
-#'
-#' # check if an object is an integrated_model object
-#'   
-#' \dontrun{
-#' is.integrated_model(model)
-#' }
-
-is.integrated_model <- function (model) {
+is.integrated_model <- function(model) {
   inherits(model, 'integrated_model')
 }
 
-#' @rdname integrated_model
-#'
 #' @export
-#'
-#' @examples
+#' @rdname integrated_model
 #' 
-#' # Print information about an 'integrated_model' object
-#'
-#' \dontrun{
-#' print(x)
-#' }
-
-print.integrated_model <- function (x, ...) {
+print.integrated_model <- function(x, ...) {
   cat(paste0('This is an integrated_model object\n'))
 }
 
-#' @rdname integrated_model
-#'
 #' @export
-#'
-#' @examples
+#' @rdname integrated_model
 #' 
-#' # Plot an 'integrated_model' object
-#'
-#' \dontrun{
-#' plot(x)
-#' }
-
-plot.integrated_model <- function (x, ...) {
+plot.integrated_model <- function(x, ...) {
   
   plot(x$greta_model, ...)
   
 }
 
-#' @rdname integrated_model
-#'
 #' @export
-#'
-#' @examples
+#' @rdname integrated_model
 #' 
-#' # Summarise an 'integrated_model' object
-#'
-#' \dontrun{
-#' summary(x)
-#' }
-
-summary.integrated_model <- function (object, ...) {
+summary.integrated_model <- function(object, ...) {
   
   NULL
   
