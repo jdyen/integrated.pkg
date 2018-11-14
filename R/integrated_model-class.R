@@ -43,6 +43,7 @@ integrated_model <- function(...) {
 
   # check process models are all the same
   ## NEED A STRING FOR THIS?
+  ## USE identical()
   process_list <- sapply(data_modules, extract_process)
   if (length(unique(process_list) > 1))
     stop(paste0("data are connected to ", length(unique(process_list)), " different processes"), call. = FALSE)
